@@ -1,26 +1,21 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { Routes, Route, BrowserRouter as Router } from 'react-router-dom';
+import { Text } from '@chakra-ui/react';
+import DashboardLayout from './components/layout/DashboardLayout';
+import BoardPage from './components/pages/BoardPage';
 
-function App() {
+const App = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<DashboardLayout />}>
+          <Route path="" element={<BoardPage />} />
+          <Route path="timeline" element={<Text>Timeline Page</Text>} />
+        </Route>
+
+        <Route path="/login" element={<Text>Login</Text>} />
+      </Routes>
+    </Router>
   );
-}
+};
 
 export default App;
