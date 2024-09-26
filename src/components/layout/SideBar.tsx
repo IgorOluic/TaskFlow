@@ -1,7 +1,9 @@
-import { VStack } from '@chakra-ui/react';
+import { HStack, Text, VStack } from '@chakra-ui/react';
 import SideBarItem from './SideBarItem';
 import { memo } from 'react';
 import SVGS from '../../constants/SVGS';
+import { useAppSelector } from '../../hooks/useAppSelector';
+import { selectSelectedProject } from '../../redux/projects/projectsSelectors';
 
 export type SidebarItemType = {
   name: string;
@@ -14,6 +16,8 @@ type SideBarProps = {
 };
 
 export const SideBar = ({ items }: SideBarProps) => {
+  const selectedProject = useAppSelector(selectSelectedProject);
+
   return (
     <VStack
       height="calc(100vh - 56px)"
@@ -24,6 +28,9 @@ export const SideBar = ({ items }: SideBarProps) => {
       borderRightWidth={4}
       borderRightColor="gray.100"
     >
+      <HStack>
+        <Text>{selectedProject?.name}</Text>
+      </HStack>
       <VStack w="full" spacing={0} py={6}>
         {items?.map((item, index) => {
           return (

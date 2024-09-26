@@ -1,9 +1,17 @@
-import { HStack, Text } from '@chakra-ui/react';
-import { memo } from 'react';
+import { Button, HStack, Text } from '@chakra-ui/react';
+import { memo, useEffect } from 'react';
+import ProfileMenu from './ProfileMenu';
+import ProjectsPopover from './ProjectsPopover';
+import { useAppDispatch } from '../../hooks/useAppDispatch';
+import { fetchProjects } from '../../redux/projects/projectsSlice';
 
-type TopBarProps = {};
+export const TopBar = () => {
+  const dispatch = useAppDispatch();
 
-export const TopBar = ({}: TopBarProps) => {
+  useEffect(() => {
+    dispatch(fetchProjects());
+  }, []);
+
   return (
     <HStack
       w="full"
@@ -15,18 +23,29 @@ export const TopBar = ({}: TopBarProps) => {
       px={4}
       backgroundColor="white"
       zIndex={10}
+      alignItems="center"
+      justifyContent="space-between"
     >
-      <HStack
-        width="100%"
-        spacing={3}
-        role="group"
-        cursor="pointer"
-        justifyContent="flex-start"
-      >
-        <Text color="gray.900" fontSize={20} fontWeight={500}>
-          TaskFlow
-        </Text>
+      <HStack>
+        <HStack
+          spacing={3}
+          role="group"
+          cursor="pointer"
+          justifyContent="flex-start"
+        >
+          <Text color="gray.900" fontSize={20} fontWeight={500}>
+            TaskFlow
+          </Text>
+        </HStack>
+
+        <ProjectsPopover />
+
+        <ProjectsPopover />
+
+        <Button size="sm">New Task</Button>
       </HStack>
+
+      <ProfileMenu />
     </HStack>
   );
 };

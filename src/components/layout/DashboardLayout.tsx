@@ -6,9 +6,14 @@ import { SIDE_BAR_WIDTH, TOP_BAR_HEIGHT } from '../../constants/layout';
 
 const sideBarItems: SidebarItemType[] = [
   {
-    name: 'Board',
+    name: 'Home',
     iconName: 'board',
     path: '/',
+  },
+  {
+    name: 'Board',
+    iconName: 'board',
+    path: '/board',
   },
   {
     name: 'Timeline',
@@ -18,8 +23,6 @@ const sideBarItems: SidebarItemType[] = [
 ];
 
 export const DashboardLayout = () => {
-  const containerBgColor = 'white';
-
   return (
     <VStack
       display="flex"
@@ -27,7 +30,7 @@ export const DashboardLayout = () => {
       alignItems="flex-start"
       flex={1}
       spacing={0}
-      backgroundColor={containerBgColor}
+      backgroundColor="white"
     >
       <TopBar />
 
