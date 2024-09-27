@@ -1,9 +1,10 @@
-import { Button, HStack, Text } from '@chakra-ui/react';
+import { HStack, Text } from '@chakra-ui/react';
 import { memo, useEffect } from 'react';
 import ProfileMenu from './ProfileMenu';
 import ProjectsPopover from './ProjectsPopover';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { fetchProjects } from '../../redux/projects/projectsSlice';
+import NewTaskModal from '../modals/NewTaskModal';
 
 export const TopBar = () => {
   const dispatch = useAppDispatch();
@@ -42,7 +43,7 @@ export const TopBar = () => {
 
         <ProjectsPopover />
 
-        <Button size="sm">New Task</Button>
+        <NewTaskModal />
       </HStack>
 
       <ProfileMenu />

@@ -11,6 +11,11 @@ const sideBarItems: SidebarItemType[] = [
     path: '/',
   },
   {
+    name: 'Backlog',
+    iconName: 'board',
+    path: '/backlog',
+  },
+  {
     name: 'Board',
     iconName: 'board',
     path: '/board',
@@ -41,6 +46,7 @@ export const DashboardLayout = () => {
         width="full"
         alignItems="flex-start"
         ml={SIDE_BAR_WIDTH}
+        maxW={`calc(100vw - ${SIDE_BAR_WIDTH}px)`}
         marginTop={`${TOP_BAR_HEIGHT}px`}
         position="relative"
         minH={`calc(100vh - ${TOP_BAR_HEIGHT}px)`}

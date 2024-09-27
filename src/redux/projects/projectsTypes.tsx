@@ -21,4 +21,5 @@ export interface IProjectsState {
   columns: IColumn[];
   loading: boolean;
   error: string | null;
+  backlogTasks: any[];
 }

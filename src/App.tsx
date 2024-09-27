@@ -6,6 +6,7 @@ import LoginPage from './components/pages/LoginPage';
 import ProtectedRoute from './components/routes/ProtectedRoute';
 import RegisterPage from './components/pages/RegisterPage';
 import HomePage from './components/pages/HomePage';
+import BacklogPage from './components/pages/BacklogPage';
 
 const App = () => {
   return (
@@ -23,6 +24,7 @@ const App = () => {
 
           <Route path="board" element={<BoardPage />} />
           <Route path="timeline" element={<Text>Timeline Page</Text>} />
+          <Route path="backlog" element={<BacklogPage />} />
         </Route>
 
         <Route path="/login" element={<LoginPage />} />
