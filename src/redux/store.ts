@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
+import appReducer from './app/appSlice';
 import authReducer from './auth/authSlice';
 import projectsReducer from './projects/projectsSlice';
 
@@ -13,6 +14,7 @@ const persistedReducer = persistReducer(persistConfig, authReducer);
 
 const store = configureStore({
   reducer: {
+    app: appReducer,
     auth: persistedReducer,
     projects: projectsReducer,
   },

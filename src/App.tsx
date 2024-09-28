@@ -7,13 +7,29 @@ import ProtectedRoute from './components/routes/ProtectedRoute';
 import RegisterPage from './components/pages/RegisterPage';
 import HomePage from './components/pages/HomePage';
 import BacklogPage from './components/pages/BacklogPage';
+import NewProjectPage from './components/pages/NewProjectPage';
+import TopBarLayout from './components/layout/TopBarLayout';
+import ProjectsPage from './components/pages/ProjectsPage';
 
 const App = () => {
   return (
     <Router>
       <Routes>
         <Route
-          path="/"
+          path="/projects"
+          element={
+            <ProtectedRoute>
+              <TopBarLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="" element={<ProjectsPage />} />
+
+          <Route path="new" element={<NewProjectPage />} />
+        </Route>
+
+        <Route
+          path="/projects/:projectKey"
           element={
             <ProtectedRoute>
               <DashboardLayout />
@@ -27,7 +43,7 @@ const App = () => {
           <Route path="backlog" element={<BacklogPage />} />
         </Route>
 
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
       </Routes>
     </Router>

@@ -41,8 +41,6 @@ export const TopBar = () => {
 
         <ProjectsPopover />
 
-        <ProjectsPopover />
-
         <NewTaskModal />
       </HStack>
 

@@ -1,11 +1,16 @@
+import { IUserData } from '../auth/authTypes';
+
 export interface IProject {
-  columns: string[];
   createdAt: string;
   description: string;
   id: string;
-  members: string[];
   name: string;
   owner: string;
+  key: string;
+}
+
+export interface IProjectWithOwnerDetails extends IProject {
+  ownerDetails: IUserData;
 }
 
 export interface IColumn {
@@ -17,7 +22,7 @@ export interface IColumn {
 
 export interface IProjectsState {
   selectedProjectId: string | null;
-  projects: IProject[];
+  projects: IProjectWithOwnerDetails[];
   columns: IColumn[];
   loading: boolean;
   error: string | null;

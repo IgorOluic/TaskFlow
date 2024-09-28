@@ -2,7 +2,7 @@ import { Flex, HStack, Text } from '@chakra-ui/react';
 import { memo } from 'react';
 import SvgIcon from '../ui/SvgIcon';
 import SVGS from '../../constants/SVGS';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 type SideBarItemProps = {
   name: string;
@@ -12,12 +12,13 @@ type SideBarItemProps = {
 
 export const SideBarItem = ({ name, iconName, path }: SideBarItemProps) => {
   const location = useLocation();
+  const { projectKey } = useParams();
   const navigate = useNavigate();
 
   const isSelected = location.pathname === path;
 
   const handleClick = () => {
-    navigate(path);
+    navigate(`/projects/${projectKey}${path}`);
   };
 
   return (

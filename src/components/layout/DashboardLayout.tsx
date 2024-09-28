@@ -1,8 +1,11 @@
 import { VStack } from '@chakra-ui/react';
 import { SideBar, SidebarItemType } from './SideBar';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useParams } from 'react-router-dom';
 import TopBar from './TopBar';
 import { SIDE_BAR_WIDTH, TOP_BAR_HEIGHT } from '../../constants/layout';
+import { useEffect } from 'react';
+import { useAppDispatch } from '../../hooks/useAppDispatch';
+import { fetchProjectByKey } from '../../redux/projects/projectsSlice';
 
 const sideBarItems: SidebarItemType[] = [
   {
@@ -28,6 +31,15 @@ const sideBarItems: SidebarItemType[] = [
 ];
 
 export const DashboardLayout = () => {
+  const { projectKey } = useParams();
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    if (projectKey) {
+      dispatch(fetchProjectByKey(projectKey));
+    }
+  }, [projectKey]);
+
   return (
     <VStack
       display="flex"

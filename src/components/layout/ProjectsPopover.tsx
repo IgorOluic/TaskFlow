@@ -13,12 +13,22 @@ import { useAppSelector } from '../../hooks/useAppSelector';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { setSelectedProjectId } from '../../redux/projects/projectsSlice';
 import { IProject } from '../../redux/projects/projectsTypes';
+import { useNavigate } from 'react-router-dom';
 
 const ProjectsPopover = () => {
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { projects } = useAppSelector((state) => state.projects);
 
   const { isOpen, onClose, onToggle } = useDisclosure();
+
+  const handleViewAllProjectsClick = () => {
+    navigate('/projects');
+  };
+
+  const handleCreateProjectClick = () => {
+    navigate('/projects/new');
+  };
 
   const renderProjectItem = (item: IProject, index: number): JSX.Element => {
     const handleProjectClick = () => {
@@ -82,6 +92,7 @@ const ProjectsPopover = () => {
               w="full"
               px={4}
               py={2}
+              onClick={handleViewAllProjectsClick}
             >
               <Text fontSize={14}>View all projects</Text>
             </HStack>
@@ -92,6 +103,7 @@ const ProjectsPopover = () => {
               w="full"
               px={4}
               py={2}
+              onClick={handleCreateProjectClick}
             >
               <Text fontSize={14}>Create project</Text>
             </HStack>

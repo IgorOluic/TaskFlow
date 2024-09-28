@@ -3,6 +3,7 @@ import { memo, useState } from 'react';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { logoutUser } from '../../redux/auth/authSlice';
 import { useAppSelector } from '../../hooks/useAppSelector';
+import UserAvatar from '../ui/UserAvatar';
 
 export const ProfileMenu = () => {
   const dispatch = useAppDispatch();
@@ -29,18 +30,7 @@ export const ProfileMenu = () => {
       position="relative"
       cursor="pointer"
     >
-      <Flex
-        w={7}
-        h={7}
-        borderRadius="full"
-        backgroundColor="green.200"
-        alignItems="center"
-        justifyContent="center"
-      >
-        <Text fontSize={10} fontWeight={500}>
-          MM
-        </Text>
-      </Flex>
+      <UserAvatar firstName={user?.firstName} lastName={user?.lastName} />
 
       {open && (
         <VStack

@@ -1,16 +1,25 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAppSelector } from '../../hooks/useAppSelector';
+import { Center, Spinner } from '@chakra-ui/react';
+import useAuth from '../../hooks/useAuth';
 
 interface PrivateRouteProps {
   children: ReactNode;
 }
 
 const ProtectedRoute = ({ children }: PrivateRouteProps) => {
-  const { user } = useAppSelector((state) => state.auth);
+  const { loading, user } = useAuth();
+
+  if (loading) {
+    return (
+      <Center height="100vh">
+        <Spinner size="xl" />
+      </Center>
+    );
+  }
 
   if (!user) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/" />;
   }
 
   return <>{children}</>;

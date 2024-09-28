@@ -1,5 +1,4 @@
 import { Text, VStack } from '@chakra-ui/react';
-import NewProjectModal from '../modals/NewProjectModal';
 
 const HomePage = () => {
   return (
@@ -13,8 +12,6 @@ const HomePage = () => {
       <Text>
         You are not a part of any projects at the moment, please create one
       </Text>
-
-      <NewProjectModal />
     </VStack>
   );
 };

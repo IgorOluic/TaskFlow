@@ -10,30 +10,105 @@ import {
   updateDoc,
   arrayUnion,
   where,
+  getDoc,
+  setDoc,
 } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
-import { IColumn, IProject, IProjectsState } from './projectsTypes';
+import {
+  IColumn,
+  IProjectWithOwnerDetails,
+  IProjectsState,
+} from './projectsTypes';
+import { getAuth } from 'firebase/auth';
 
 export const fetchProjects = createAsyncThunk(
   'projects/fetchProjects',
   async (_, { rejectWithValue }) => {
     try {
-      const querySnapshot = await getDocs(collection(db, 'projects'));
-      const projects = querySnapshot.docs.map((doc) => {
-        const data = doc.data();
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
 
-        const createdAt = data.createdAt?.toDate
-          ? data.createdAt.toDate()
-          : null;
+      if (!currentUser) {
+        throw new Error('User is not authenticated');
+      }
 
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: createdAt ? createdAt.toISOString() : null, // Convert to serializable ISO string
-        } as IProject;
-      });
+      const projectQuery = query(
+        collection(db, 'projects'),
+        where('users', 'array-contains', currentUser.uid),
+      );
+
+      const querySnapshot = await getDocs(projectQuery);
+
+      const projects = await Promise.all(
+        querySnapshot.docs.map(async (docSnapshot) => {
+          const data = docSnapshot.data();
+
+          const createdAt = data.createdAt?.toDate
+            ? data.createdAt.toDate()
+            : null;
+
+          let ownerDetails = null;
+          if (data.owner) {
+            const ownerDoc = await getDoc(doc(db, 'users', data.owner));
+            ownerDetails = ownerDoc.exists() ? ownerDoc.data() : null;
+          }
+
+          return {
+            id: docSnapshot.id,
+            ...data,
+            createdAt: createdAt ? createdAt.toISOString() : null,
+            ownerDetails,
+          } as IProjectWithOwnerDetails;
+        }),
+      );
 
       return projects;
+    } catch (error) {
+      return rejectWithValue(error);
+    }
+  },
+);
+
+export const fetchProjectByKey = createAsyncThunk(
+  'projects/fetchProjectByKey',
+  async (key: string, { rejectWithValue }) => {
+    try {
+      const projectKeyQuery = query(
+        collection(db, 'projectKeys'),
+        where('__name__', '==', key),
+      );
+      const keySnapshot = await getDocs(projectKeyQuery);
+
+      if (keySnapshot.empty) {
+        throw new Error('Project not found');
+      }
+
+      const projectKeyDoc = keySnapshot.docs[0];
+      const { projectId } = projectKeyDoc.data();
+
+      const projectRef = doc(db, 'projects', projectId);
+      const projectSnapshot = await getDoc(projectRef);
+
+      if (!projectSnapshot.exists()) {
+        throw new Error('Project not found');
+      }
+
+      const data = projectSnapshot.data();
+
+      const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : null;
+
+      let ownerDetails = null;
+      if (data.owner) {
+        const ownerDoc = await getDoc(doc(db, 'users', data.owner));
+        ownerDetails = ownerDoc.exists() ? ownerDoc.data() : null;
+      }
+
+      return {
+        id: projectSnapshot.id,
+        ...data,
+        createdAt: createdAt ? createdAt.toISOString() : null,
+        ownerDetails,
+      } as IProjectWithOwnerDetails;
     } catch (error) {
       return rejectWithValue(error);
     }
@@ -67,20 +142,46 @@ export const fetchProjectColumns = createAsyncThunk(
 export const createNewProject = createAsyncThunk(
   'projects/addProjectToFirestore',
   async (
-    { name, description }: { name: string; description: string },
+    {
+      name,
+      description,
+      projectKey,
+    }: { name: string; description: string; projectKey: string },
     { rejectWithValue },
   ) => {
     try {
-      const batch = writeBatch(db);
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) {
+        throw new Error('User is not authenticated');
+      }
+
+      const projectKeyRef = doc(db, 'projectKeys', projectKey);
+      const projectKeySnapshot = await getDoc(projectKeyRef);
+
+      if (projectKeySnapshot.exists()) {
+        throw new Error(
+          'Project key already exists. Please choose a different key.',
+        );
+      }
 
       const projectRef = doc(collection(db, 'projects'));
 
-      batch.set(projectRef, {
+      await setDoc(projectRef, {
         name,
         description,
+        key: projectKey,
         createdAt: new Date(),
+        owner: currentUser.uid,
+        users: [currentUser.uid],
       });
 
+      await setDoc(projectKeyRef, {
+        projectId: projectRef.id,
+      });
+
+      const batch = writeBatch(db);
       const columns = [
         { name: 'To Do', order: 1, tasks: [] },
         { name: 'In Progress', order: 2, tasks: [] },
@@ -97,9 +198,10 @@ export const createNewProject = createAsyncThunk(
 
       await batch.commit();
 
-      return { name, description, id: projectRef.id };
+      return { name, description, id: projectRef.id, key: projectKey };
     } catch (error) {
-      rejectWithValue(error);
+      console.log(error);
+      return rejectWithValue(error);
     }
   },
 );
