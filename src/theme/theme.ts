@@ -7,7 +7,6 @@ const config: ThemeConfig = {
   useSystemColorMode: false,
 };
 
-// Extend the theme to include custom colors, fonts, etc.
 const theme = extendTheme({
   config,
   fonts: {
@@ -17,6 +16,14 @@ const theme = extendTheme({
   },
   components: {
     Button: buttonTheme,
+    FormLabel: {
+      baseStyle: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: 'gray.600',
+        mb: 2,
+      },
+    },
   },
 });
 

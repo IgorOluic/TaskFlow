@@ -13,13 +13,14 @@ import {
   getDoc,
   setDoc,
 } from 'firebase/firestore';
-import { db } from '../../firebase/firebaseConfig';
+import { db, storage } from '../../firebase/firebaseConfig';
 import {
   IColumn,
   IProjectWithOwnerDetails,
   IProjectsState,
 } from './projectsTypes';
 import { getAuth } from 'firebase/auth';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export const fetchProjects = createAsyncThunk(
   'projects/fetchProjects',
@@ -44,19 +45,27 @@ export const fetchProjects = createAsyncThunk(
           const data = docSnapshot.data();
 
           const createdAt = data.createdAt?.toDate
-            ? data.createdAt.toDate()
+            ? data.createdAt.toDate().toISOString()
             : null;
 
           let ownerDetails = null;
           if (data.owner) {
             const ownerDoc = await getDoc(doc(db, 'users', data.owner));
-            ownerDetails = ownerDoc.exists() ? ownerDoc.data() : null;
+            if (ownerDoc.exists()) {
+              ownerDetails = ownerDoc.data();
+
+              if (ownerDetails?.createdAt?.toDate) {
+                ownerDetails.createdAt = ownerDetails.createdAt
+                  .toDate()
+                  .toISOString();
+              }
+            }
           }
 
           return {
             id: docSnapshot.id,
             ...data,
-            createdAt: createdAt ? createdAt.toISOString() : null,
+            createdAt,
             ownerDetails,
           } as IProjectWithOwnerDetails;
         }),
@@ -144,9 +153,15 @@ export const createNewProject = createAsyncThunk(
   async (
     {
       name,
-      description,
       projectKey,
-    }: { name: string; description: string; projectKey: string },
+      defaultIconId,
+      image,
+    }: {
+      name: string;
+      projectKey: string;
+      defaultIconId: number | null;
+      image: File | null;
+    },
     { rejectWithValue },
   ) => {
     try {
@@ -168,13 +183,22 @@ export const createNewProject = createAsyncThunk(
 
       const projectRef = doc(collection(db, 'projects'));
 
+      let projectIconUrl = null;
+
+      if (image) {
+        const imageRef = ref(storage, `project-icons/${projectRef.id}`);
+        await uploadBytes(imageRef, image);
+        projectIconUrl = await getDownloadURL(imageRef);
+      }
+
       await setDoc(projectRef, {
         name,
-        description,
         key: projectKey,
         createdAt: new Date(),
         owner: currentUser.uid,
         users: [currentUser.uid],
+        iconUrl: projectIconUrl, // Use the image URL if uploaded, otherwise use default icon
+        defaultIconId: image ? null : defaultIconId,
       });
 
       await setDoc(projectKeyRef, {
@@ -198,7 +222,12 @@ export const createNewProject = createAsyncThunk(
 
       await batch.commit();
 
-      return { name, description, id: projectRef.id, key: projectKey };
+      return {
+        name,
+        id: projectRef.id,
+        key: projectKey,
+        iconUrl: projectIconUrl,
+      };
     } catch (error) {
       console.log(error);
       return rejectWithValue(error);

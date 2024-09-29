@@ -7,6 +7,8 @@ export interface IProject {
   name: string;
   owner: string;
   key: string;
+  iconUrl: string | null;
+  defaultIconId: number | null;
 }
 
 export interface IProjectWithOwnerDetails extends IProject {

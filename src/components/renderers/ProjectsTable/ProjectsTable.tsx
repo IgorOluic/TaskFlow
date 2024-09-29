@@ -3,7 +3,17 @@ import CustomTable from '../../ui/CustomTable';
 import ProjectTableRow from './ProjectTableRow';
 
 const TABLE_COLUMNS = [
-  { label: 'Name' },
+  {
+    label: '',
+    options: { width: '32px', pr: 0, mr: 0 },
+  },
+  {
+    label: 'Name',
+    options: {
+      ml: 2,
+      pl: 2,
+    },
+  },
   { label: 'Key' },
   { label: 'Lead' },
   { label: 'More Actions', options: { isNumeric: true } },

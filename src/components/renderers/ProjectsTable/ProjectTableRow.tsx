@@ -11,6 +11,7 @@ import { IProjectWithOwnerDetails } from '../../../redux/projects/projectsTypes'
 import CustomLink from '../../ui/CustomLink';
 import SvgIcon from '../../ui/SvgIcon';
 import UserAvatar from '../../ui/UserAvatar';
+import ProjectIcon from '../../ui/ProjectIcon';
 
 interface CustomTableProps {
   rowData: IProjectWithOwnerDetails;
@@ -19,7 +20,13 @@ interface CustomTableProps {
 const ProjectTableRow = ({ rowData }: CustomTableProps) => {
   return (
     <Tr>
-      <Td>
+      <Td mr={0} pr={0}>
+        <ProjectIcon
+          iconUrl={rowData.iconUrl}
+          defaultIconId={rowData.defaultIconId}
+        />
+      </Td>
+      <Td ml={2} pl={2}>
         <CustomLink to={`/projects/${rowData.key || 'asd'}`} color="purple.600">
           {rowData.name}
         </CustomLink>
