@@ -11,7 +11,7 @@ import {
   arrayUnion,
   where,
   getDoc,
-  setDoc,
+  runTransaction,
 } from 'firebase/firestore';
 import { db, storage } from '../../firebase/firebaseConfig';
 import {
@@ -173,61 +173,63 @@ export const createNewProject = createAsyncThunk(
       }
 
       const projectKeyRef = doc(db, 'projectKeys', projectKey);
-      const projectKeySnapshot = await getDoc(projectKeyRef);
 
-      if (projectKeySnapshot.exists()) {
-        throw new Error(
-          'Project key already exists. Please choose a different key.',
-        );
-      }
+      return await runTransaction(db, async (transaction) => {
+        const projectKeySnapshot = await transaction.get(projectKeyRef);
 
-      const projectRef = doc(collection(db, 'projects'));
+        if (projectKeySnapshot.exists()) {
+          throw new Error(
+            'Project key already exists. Please choose a different key.',
+          );
+        }
 
-      let projectIconUrl = null;
+        const projectRef = doc(collection(db, 'projects'));
+        let projectIconUrl = null;
 
-      if (image) {
-        const imageRef = ref(storage, `project-icons/${projectRef.id}`);
-        await uploadBytes(imageRef, image);
-        projectIconUrl = await getDownloadURL(imageRef);
-      }
+        if (image) {
+          const imageRef = ref(storage, `project-icons/${projectRef.id}`);
+          await uploadBytes(imageRef, image);
+          projectIconUrl = await getDownloadURL(imageRef);
+        }
 
-      await setDoc(projectRef, {
-        name,
-        key: projectKey,
-        createdAt: new Date(),
-        owner: currentUser.uid,
-        users: [currentUser.uid],
-        iconUrl: projectIconUrl, // Use the image URL if uploaded, otherwise use default icon
-        defaultIconId: image ? null : defaultIconId,
+        transaction.set(projectRef, {
+          name,
+          key: projectKey,
+          createdAt: new Date(),
+          owner: currentUser.uid,
+          users: [currentUser.uid],
+          iconUrl: projectIconUrl, // Use the image URL if uploaded, otherwise use default icon
+          defaultIconId: image ? null : defaultIconId,
+        });
+
+        transaction.set(projectKeyRef, {
+          projectId: projectRef.id,
+        });
+
+        const batch = writeBatch(db);
+        const columns = [
+          { name: 'To Do', order: 1, tasks: [] },
+          { name: 'In Progress', order: 2, tasks: [] },
+          { name: 'Testing', order: 3, tasks: [] },
+          { name: 'Done', order: 4, tasks: [] },
+        ];
+
+        columns.forEach((column) => {
+          const columnRef = doc(
+            collection(db, `projects/${projectRef.id}/columns`),
+          );
+          batch.set(columnRef, column);
+        });
+
+        await batch.commit();
+
+        return {
+          name,
+          id: projectRef.id,
+          key: projectKey,
+          iconUrl: projectIconUrl,
+        };
       });
-
-      await setDoc(projectKeyRef, {
-        projectId: projectRef.id,
-      });
-
-      const batch = writeBatch(db);
-      const columns = [
-        { name: 'To Do', order: 1, tasks: [] },
-        { name: 'In Progress', order: 2, tasks: [] },
-        { name: 'Testing', order: 3, tasks: [] },
-        { name: 'Done', order: 4, tasks: [] },
-      ];
-
-      columns.forEach((column) => {
-        const columnRef = doc(
-          collection(db, `projects/${projectRef.id}/columns`),
-        );
-        batch.set(columnRef, column);
-      });
-
-      await batch.commit();
-
-      return {
-        name,
-        id: projectRef.id,
-        key: projectKey,
-        iconUrl: projectIconUrl,
-      };
     } catch (error) {
       console.log(error);
       return rejectWithValue(error);
