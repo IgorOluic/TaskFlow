@@ -109,7 +109,15 @@ export const fetchProjectByKey = createAsyncThunk(
       let ownerDetails = null;
       if (data.owner) {
         const ownerDoc = await getDoc(doc(db, 'users', data.owner));
-        ownerDetails = ownerDoc.exists() ? ownerDoc.data() : null;
+        if (ownerDoc.exists()) {
+          ownerDetails = ownerDoc.data();
+
+          if (ownerDetails?.createdAt?.toDate) {
+            ownerDetails.createdAt = ownerDetails.createdAt
+              .toDate()
+              .toISOString();
+          }
+        }
       }
 
       return {
