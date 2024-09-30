@@ -11,7 +11,7 @@ interface TaskListProps {
 const TaskList = ({ taskIds }: TaskListProps) => {
   const [collapsed, setCollapsed] = useState(false);
 
-  const { backlogTasks } = useAppSelector((state) => state.projects);
+  const { backlogTasks } = useAppSelector((state) => state.tasks);
 
   const renderTaskItem = (task: any, index: number): JSX.Element => {
     const isLastItem = backlogTasks.length - 1 === index;

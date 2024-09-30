@@ -13,9 +13,9 @@ import {
   FormLabel,
   useDisclosure,
 } from '@chakra-ui/react';
-import { createTask } from '../../redux/projects/projectsSlice';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { useAppSelector } from '../../hooks/useAppSelector';
+import { createTask } from '../../redux/tasks/tasksSlice';
 
 const NewTaskModal = () => {
   const { selectedProjectId } = useAppSelector((state) => state.projects);

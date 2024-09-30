@@ -4,6 +4,8 @@ import storage from 'redux-persist/lib/storage';
 import appReducer from './app/appSlice';
 import authReducer from './auth/authSlice';
 import projectsReducer from './projects/projectsSlice';
+import columnsReducer from './columns/columnsSlice';
+import tasksReducer from './tasks/tasksSlice';
 
 const persistConfig = {
   key: 'root',
@@ -17,6 +19,8 @@ const store = configureStore({
     app: appReducer,
     auth: persistedReducer,
     projects: projectsReducer,
+    columns: columnsReducer,
+    tasks: tasksReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

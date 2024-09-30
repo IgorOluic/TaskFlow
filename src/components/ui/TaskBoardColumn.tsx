@@ -1,6 +1,6 @@
 import { Box, Text, VStack } from '@chakra-ui/react';
 import TaskBoardItem from './TaskBoardItem';
-import { IColumn } from '../../redux/projects/projectsTypes';
+import { IColumn } from '../../redux/columns/columnsTypes';
 
 interface TaskBoardColumnProps {
   column: IColumn;
@@ -25,8 +25,6 @@ const TaskBoardColumn = ({ column }: TaskBoardColumnProps) => {
           {column.name}
         </Text>
       </Box>
-
-      {column.tasks.map(renderTaskItem)}
     </VStack>
   );
 };

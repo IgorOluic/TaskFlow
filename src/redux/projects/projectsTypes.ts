@@ -15,18 +15,7 @@ export interface IProjectWithOwnerDetails extends IProject {
   ownerDetails: IUserData;
 }
 
-export interface IColumn {
-  name: string;
-  order: number;
-  id: string;
-  tasks: any[];
-}
-
 export interface IProjectsState {
   selectedProjectId: string | null;
   projects: IProjectWithOwnerDetails[];
-  columns: IColumn[];
-  loading: boolean;
-  error: string | null;
-  backlogTasks: any[];
 }
