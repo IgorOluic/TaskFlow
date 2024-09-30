@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getDocs, collection, query, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
-import { IColumn, IColumnsState } from './columnsTypes';
+import { ColumnsData, IColumnsState } from './columnsTypes';
+import { groupFirestoreDocsById } from '../../utils/data';
 
 export const fetchProjectColumns = createAsyncThunk(
   'projects/fetchColumns',
@@ -12,15 +13,9 @@ export const fetchProjectColumns = createAsyncThunk(
 
       const columnsSnapshot = await getDocs(columnsQuery);
 
-      const columns = columnsSnapshot.docs.map(
-        (doc) =>
-          ({
-            id: doc.id,
-            ...doc.data(),
-          }) as IColumn,
-      );
+      const { ids, data } = groupFirestoreDocsById(columnsSnapshot.docs);
 
-      return columns;
+      return { ids, data };
     } catch (error) {
       return rejectWithValue(error);
     }
@@ -28,7 +23,8 @@ export const fetchProjectColumns = createAsyncThunk(
 );
 
 const initialState: IColumnsState = {
-  columns: [],
+  columnIds: [],
+  columnsData: {},
 };
 
 const columnsSlice = createSlice({
@@ -37,7 +33,8 @@ const columnsSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder.addCase(fetchProjectColumns.fulfilled, (state, action) => {
-      state.columns = action.payload;
+      state.columnIds = action.payload.ids;
+      state.columnsData = action.payload.data as ColumnsData;
     });
   },
 });

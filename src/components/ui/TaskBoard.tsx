@@ -1,18 +1,18 @@
 import { HStack } from '@chakra-ui/react';
 import TaskBoardColumn from './TaskBoardColumn';
 import { useAppSelector } from '../../hooks/useAppSelector';
-import { IColumn } from '../../redux/columns/columnsTypes';
+import { selectColumnIds } from '../../redux/columns/columnsSelectors';
 
 const TaskBoard = () => {
-  const { columns } = useAppSelector((state) => state.columns);
+  const columnIds = useAppSelector(selectColumnIds);
 
-  const renderColumnItem = (column: IColumn, index: number): JSX.Element => {
-    return <TaskBoardColumn key={index} column={column} />;
+  const renderColumnItem = (columnId: string, index: number): JSX.Element => {
+    return <TaskBoardColumn key={index} id={columnId} />;
   };
 
   return (
     <HStack w="full" h="500px" backgroundColor="blue.100" overflowX="scroll">
-      {columns.map(renderColumnItem)}
+      {columnIds.map(renderColumnItem)}
     </HStack>
   );
 };

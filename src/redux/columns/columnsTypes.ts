@@ -4,6 +4,9 @@ export interface IColumn {
   id: string;
 }
 
+export type ColumnsData = Record<string, IColumn>;
+
 export interface IColumnsState {
-  columns: IColumn[];
+  columnIds: string[];
+  columnsData: ColumnsData;
 }

@@ -1,15 +1,18 @@
 import { Box, Text, VStack } from '@chakra-ui/react';
 import TaskBoardItem from './TaskBoardItem';
-import { IColumn } from '../../redux/columns/columnsTypes';
+import { selectColumnById } from '../../redux/columns/columnsSelectors';
+import { useAppSelector } from '../../hooks/useAppSelector';
 
 interface TaskBoardColumnProps {
-  column: IColumn;
+  id: string;
 }
 
-const TaskBoardColumn = ({ column }: TaskBoardColumnProps) => {
+const TaskBoardColumn = ({ id }: TaskBoardColumnProps) => {
   const renderTaskItem = (item: any, index: number): JSX.Element => {
     return <TaskBoardItem key={index} task={item} />;
   };
+
+  const columnData = useAppSelector(selectColumnById(id));
 
   return (
     <VStack
@@ -22,7 +25,7 @@ const TaskBoardColumn = ({ column }: TaskBoardColumnProps) => {
     >
       <Box top={0} py={3} w="full" h="56px" alignItems="center" px={2}>
         <Text fontSize={12} fontWeight={600} color="gray.600">
-          {column.name}
+          {columnData.name}
         </Text>
       </Box>
     </VStack>
