@@ -26,14 +26,7 @@ const App = () => {
 
           <Route path="/projects" element={<ProjectsPage />} />
 
-          <Route
-            path="/projects/:projectKey"
-            element={
-              <ProtectedRoute>
-                <ProjectLayout />
-              </ProtectedRoute>
-            }
-          >
+          <Route path="/projects/:projectKey" element={<ProjectLayout />}>
             <Route path="" element={<HomePage />} />
 
             <Route path="board" element={<BoardPage />} />
