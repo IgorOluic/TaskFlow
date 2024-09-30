@@ -10,29 +10,34 @@ import {
 } from '@chakra-ui/react';
 import SvgIcon from '../ui/SvgIcon';
 import { useAppSelector } from '../../hooks/useAppSelector';
-import { useAppDispatch } from '../../hooks/useAppDispatch';
-import { setSelectedProjectId } from '../../redux/projects/projectsSlice';
 import { IProject } from '../../redux/projects/projectsTypes';
-import { useNavigate } from 'react-router-dom';
+import { generatePath, useLocation, useNavigate } from 'react-router-dom';
 
 const ProjectsPopover = () => {
+  const location = useLocation();
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
   const { projects } = useAppSelector((state) => state.projects);
 
   const { isOpen, onClose, onToggle } = useDisclosure();
 
   const handleViewAllProjectsClick = () => {
     navigate('/projects');
+    onClose();
   };
 
   const handleCreateProjectClick = () => {
-    navigate('/projects/new');
+    navigate('/new-project');
+    onClose();
   };
 
   const renderProjectItem = (item: IProject, index: number): JSX.Element => {
     const handleProjectClick = () => {
-      dispatch(setSelectedProjectId(item.id));
+      const newPath = generatePath('/projects/:projectKey/*', {
+        projectKey: item.key,
+        '*': location.pathname.split('/').slice(3).join('/'),
+      });
+
+      navigate(newPath);
       onClose();
     };
 
@@ -56,6 +61,7 @@ const ProjectsPopover = () => {
     <Popover isOpen={isOpen} onClose={onClose}>
       <PopoverTrigger>
         <HStack
+          outline="none"
           onClick={onToggle}
           cursor="pointer"
           py={2}
@@ -73,8 +79,12 @@ const ProjectsPopover = () => {
         </HStack>
       </PopoverTrigger>
 
-      <PopoverContent>
-        <VStack alignItems="flex-start" pb={2} pt={4}>
+      <PopoverContent
+        _focus={{
+          boxShadow: 'lg',
+        }}
+      >
+        <VStack alignItems="flex-start" pb={2} pt={4} outline="none">
           <Text ml={4} fontSize={12} fontWeight={700} color="gray.600">
             Recent
           </Text>

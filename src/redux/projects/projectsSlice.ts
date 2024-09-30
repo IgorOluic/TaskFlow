@@ -332,6 +332,9 @@ const projectsSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch projects';
       })
+      .addCase(fetchProjectByKey.fulfilled, (state, action) => {
+        state.selectedProjectId = action.payload.id;
+      })
       .addCase(fetchProjectColumns.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -360,5 +363,4 @@ const projectsSlice = createSlice({
 });
 
 export const { setSelectedProjectId } = projectsSlice.actions;
-
 export default projectsSlice.reducer;

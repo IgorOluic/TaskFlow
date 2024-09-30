@@ -6,7 +6,7 @@ const ProjectsPage = () => {
   const navigate = useNavigate();
 
   const handleCreateProject = () => {
-    navigate('/projects/new');
+    navigate('/new-project');
   };
 
   return (
@@ -15,6 +15,8 @@ const ProjectsPage = () => {
       alignItems="flex-start"
       justifyContent="center"
       spacing={10}
+      px={8}
+      pt={8}
     >
       <HStack w="full" justifyContent="space-between" alignItems="center">
         <Text fontSize={24} fontWeight={500}>

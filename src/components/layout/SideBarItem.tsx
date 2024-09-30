@@ -15,7 +15,7 @@ export const SideBarItem = ({ name, iconName, path }: SideBarItemProps) => {
   const { projectKey } = useParams();
   const navigate = useNavigate();
 
-  const isSelected = location.pathname === path;
+  const isSelected = location.pathname.endsWith(path);
 
   const handleClick = () => {
     navigate(`/projects/${projectKey}${path}`);

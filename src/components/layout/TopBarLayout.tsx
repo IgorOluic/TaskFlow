@@ -22,8 +22,6 @@ export const TopBarLayout = () => {
         marginTop={`${TOP_BAR_HEIGHT}px`}
         position="relative"
         minH={`calc(100vh - ${TOP_BAR_HEIGHT}px)`}
-        px={8}
-        pt={8}
       >
         <Outlet />
       </VStack>

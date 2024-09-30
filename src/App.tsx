@@ -1,6 +1,6 @@
 import { Routes, Route, BrowserRouter as Router } from 'react-router-dom';
 import { Text } from '@chakra-ui/react';
-import DashboardLayout from './components/layout/DashboardLayout';
+import ProjectLayout from './components/layout/ProjectLayout';
 import BoardPage from './components/pages/BoardPage';
 import LoginPage from './components/pages/LoginPage';
 import ProtectedRoute from './components/routes/ProtectedRoute';
@@ -16,31 +16,30 @@ const App = () => {
     <Router>
       <Routes>
         <Route
-          path="/projects"
           element={
             <ProtectedRoute>
               <TopBarLayout />
             </ProtectedRoute>
           }
         >
-          <Route path="" element={<ProjectsPage />} />
+          <Route path="/new-project" element={<NewProjectPage />} />
 
-          <Route path="new" element={<NewProjectPage />} />
-        </Route>
+          <Route path="/projects" element={<ProjectsPage />} />
 
-        <Route
-          path="/projects/:projectKey"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="" element={<HomePage />} />
+          <Route
+            path="/projects/:projectKey"
+            element={
+              <ProtectedRoute>
+                <ProjectLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="" element={<HomePage />} />
 
-          <Route path="board" element={<BoardPage />} />
-          <Route path="timeline" element={<Text>Timeline Page</Text>} />
-          <Route path="backlog" element={<BacklogPage />} />
+            <Route path="board" element={<BoardPage />} />
+            <Route path="timeline" element={<Text>Timeline Page</Text>} />
+            <Route path="backlog" element={<BacklogPage />} />
+          </Route>
         </Route>
 
         <Route path="/" element={<LoginPage />} />

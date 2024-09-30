@@ -1,13 +1,18 @@
-import { Image } from '@chakra-ui/react';
+import { Image, ImageProps } from '@chakra-ui/react';
 import DEFAULT_AVATARS from '../../constants/defaultAvatars';
 import { useMemo } from 'react';
 
 interface ProjectIconProps {
   iconUrl: string | null;
   defaultIconId: number | null;
+  boxSize?: ImageProps['boxSize'];
 }
 
-const ProjectIcon = ({ iconUrl, defaultIconId }: ProjectIconProps) => {
+const ProjectIcon = ({
+  iconUrl,
+  defaultIconId,
+  boxSize = '28px',
+}: ProjectIconProps) => {
   const selectedDefaultIcon = useMemo(() => {
     if (iconUrl) {
       return null;
@@ -22,8 +27,8 @@ const ProjectIcon = ({ iconUrl, defaultIconId }: ProjectIconProps) => {
     <Image
       src={iconUrl ? iconUrl : `${selectedDefaultIcon?.url}&size=100x100`}
       bg={selectedDefaultIcon?.bgColor}
-      boxSize="28px"
-      minW="28px"
+      boxSize={boxSize}
+      minW={boxSize}
       borderRadius={6}
     />
   );
