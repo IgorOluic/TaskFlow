@@ -21,7 +21,7 @@ const theme = extendTheme({
         fontSize: 12,
         fontWeight: 'bold',
         color: 'gray.600',
-        mb: 2,
+        mb: 1,
       },
     },
   },

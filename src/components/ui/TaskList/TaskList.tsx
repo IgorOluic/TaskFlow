@@ -1,26 +1,24 @@
 import { HStack, Text, VStack } from '@chakra-ui/react';
-import { useAppSelector } from '../../hooks/useAppSelector';
-import SvgIcon from './SvgIcon';
+import SvgIcon from '../SvgIcon';
 import { useMemo, useState } from 'react';
 import TaskListItem from './TaskListItem';
 
 interface TaskListProps {
   taskIds: string[];
+  title: string;
 }
 
-const TaskList = ({ taskIds }: TaskListProps) => {
+const TaskList = ({ taskIds, title }: TaskListProps) => {
   const [collapsed, setCollapsed] = useState(false);
 
-  const { backlogTasks } = useAppSelector((state) => state.tasks);
-
-  const renderTaskItem = (task: any, index: number): JSX.Element => {
-    const isLastItem = backlogTasks.length - 1 === index;
-    return <TaskListItem key={index} task={task} isLastItem={isLastItem} />;
+  const renderTaskItem = (id: string, index: number): JSX.Element => {
+    const isLastItem = taskIds.length - 1 === index;
+    return <TaskListItem key={index} id={id} isLastItem={isLastItem} />;
   };
 
   const nOfTasksText = useMemo(() => {
-    return `(${backlogTasks.length} task${backlogTasks.length === 1 ? '' : 's'})`;
-  }, [backlogTasks.length]);
+    return `(${taskIds.length} task${taskIds.length === 1 ? '' : 's'})`;
+  }, [taskIds.length]);
 
   return (
     <VStack
@@ -40,7 +38,7 @@ const TaskList = ({ taskIds }: TaskListProps) => {
       >
         <SvgIcon name="chevronDown" width="12px" height="12px" />
         <Text fontSize={14} fontWeight={600}>
-          Board{' '}
+          {title}{' '}
           <Text as="span" fontSize={12} fontWeight={500} color="gray.600">
             {nOfTasksText}
           </Text>
@@ -56,7 +54,7 @@ const TaskList = ({ taskIds }: TaskListProps) => {
           borderColor="gray.300"
           spacing={0}
         >
-          {backlogTasks.map(renderTaskItem)}
+          {taskIds.map(renderTaskItem)}
         </VStack>
       )}
     </VStack>

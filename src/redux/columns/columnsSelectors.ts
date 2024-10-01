@@ -15,3 +15,8 @@ export const selectColumnsData = createSelector(
 
 export const selectColumnById = (columnId: string) =>
   createSelector([selectColumnsData], (columnsData) => columnsData[columnId]);
+
+export const selectColumnsArray = createSelector(
+  [selectColumnIds, selectColumnsData],
+  (columnIds, columnsData) => columnIds.map((id) => columnsData[id]),
+);

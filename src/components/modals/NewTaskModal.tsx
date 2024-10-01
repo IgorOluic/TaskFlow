@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { ChangeEvent, useRef } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -12,31 +12,46 @@ import {
   FormControl,
   FormLabel,
   useDisclosure,
+  VStack,
 } from '@chakra-ui/react';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { useAppSelector } from '../../hooks/useAppSelector';
 import { createTask } from '../../redux/tasks/tasksSlice';
+import ColumnDropdown from '../ui/ColumnDropdown';
+import RichTextEditor from '../ui/RichTextEditor/RichTextEditor';
+import { useParams } from 'react-router-dom';
 
 const NewTaskModal = () => {
   const { selectedProjectId } = useAppSelector((state) => state.projects);
+  const { projectKey } = useParams();
+
+  const newData = useRef({ summary: '', columnId: '', description: '' });
 
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
   const dispatch = useAppDispatch();
 
   const handleCreateTask = () => {
-    // Dispatch the createTask action
-    if (selectedProjectId) {
+    if (selectedProjectId && projectKey) {
       dispatch(
         createTask({
           projectId: selectedProjectId,
-          columnId: null,
-          taskData: { title, description },
+          projectKey,
+          ...newData.current,
         }),
       );
-      onClose();
     }
+  };
+
+  const onColumnChange = (id: string) => {
+    newData.current = { ...newData.current, columnId: id };
+  };
+
+  const onSummaryChange = (e: ChangeEvent<HTMLInputElement>) => {
+    newData.current = { ...newData.current, summary: e.target.value };
+  };
+
+  const onDescriptionChange = (content: string) => {
+    newData.current = { ...newData.current, description: content };
   };
 
   return (
@@ -45,27 +60,24 @@ const NewTaskModal = () => {
 
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent h="80vh" minW="700px">
           <ModalHeader>Create New Task</ModalHeader>
           <ModalCloseButton />
-          <ModalBody>
-            <FormControl>
-              <FormLabel>Title</FormLabel>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter title"
-              />
-            </FormControl>
+          <ModalBody overflowY="scroll">
+            <VStack w="full" alignItems="flex-start" spacing={6}>
+              <ColumnDropdown onChange={onColumnChange} />
 
-            <FormControl mt={4}>
-              <FormLabel>Description</FormLabel>
-              <Input
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Enter description"
-              />
-            </FormControl>
+              <FormControl>
+                <FormLabel>Summary</FormLabel>
+                <Input
+                  onChange={onSummaryChange}
+                  placeholder="Enter summary"
+                  autoFocus
+                />
+              </FormControl>
+
+              <RichTextEditor onChange={onDescriptionChange} />
+            </VStack>
           </ModalBody>
 
           <ModalFooter>

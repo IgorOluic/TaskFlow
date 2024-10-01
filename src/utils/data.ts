@@ -23,7 +23,7 @@ export const groupFirestoreDocsById = <T>(
 
   documents.forEach((doc) => {
     ids.push(doc.id);
-    data[doc.id] = doc.data();
+    data[doc.id] = { ...doc.data(), id: doc.id };
   });
 
   return { ids, data };

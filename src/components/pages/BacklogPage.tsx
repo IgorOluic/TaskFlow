@@ -1,9 +1,9 @@
 import { VStack } from '@chakra-ui/react';
-import TaskList from '../ui/TaskList';
 import { useEffect } from 'react';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { useAppSelector } from '../../hooks/useAppSelector';
 import { fetchBacklogTasks } from '../../redux/tasks/tasksSlice';
+import BacklogTasksList from '../renderers/BacklogTasksList';
 
 const BacklogPage = () => {
   const dispatch = useAppDispatch();
@@ -25,7 +25,7 @@ const BacklogPage = () => {
       pt={5}
       justifyContent="center"
     >
-      <TaskList taskIds={[]} />
+      <BacklogTasksList />
     </VStack>
   );
 };

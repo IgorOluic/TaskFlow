@@ -2,52 +2,72 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import {
   collection,
   doc,
-  updateDoc,
-  arrayUnion,
-  addDoc,
   query,
   where,
   getDocs,
+  runTransaction,
 } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
-import { ITasksState } from './tasksTypes';
+import { BacklogTasksData, ITasksState, TaskStatus } from './tasksTypes';
+import { groupFirestoreDocsById } from '../../utils/data';
 
 export const createTask = createAsyncThunk(
   'tasks/createTask',
   async (
     {
       projectId,
+      projectKey,
       columnId,
-      taskData,
+      summary,
+      description,
     }: {
       projectId: string;
+      projectKey: string;
       columnId?: string | null;
-      taskData: { title: string; description: string };
+      summary: string;
+      description: string;
     },
     { rejectWithValue },
   ) => {
     try {
-      const tasksRef = collection(db, `projects/${projectId}/tasks`);
+      const projectRef = doc(db, `projects/${projectId}`);
+      let taskId;
 
-      const newTask = {
-        ...taskData,
-        columnId: columnId || null,
+      await runTransaction(db, async (transaction) => {
+        const projectDoc = await transaction.get(projectRef);
+
+        if (!projectDoc.exists()) {
+          throw new Error('Project does not exist');
+        }
+
+        const taskCounter = projectDoc.data().taskCounter || 1;
+
+        // Generate the new task ID in the format projectKey-number
+        taskId = `${projectKey}-${taskCounter}`;
+
+        transaction.update(projectRef, { taskCounter: taskCounter + 1 });
+
+        const tasksRef = doc(db, `projects/${projectId}/tasks/${taskId}`);
+
+        const newTask = {
+          summary,
+          description,
+          id: taskId,
+          columnId: columnId || null,
+          createdAt: new Date().toISOString(),
+          status: TaskStatus.backlog,
+          assignedTo: null,
+        };
+
+        transaction.set(tasksRef, newTask);
+      });
+
+      return {
+        id: taskId,
+        summary,
+        description,
         createdAt: new Date().toISOString(),
-        status: columnId ? 'in-progress' : 'backlog',
-        assignedTo: null,
       };
-
-      const taskDocRef = await addDoc(tasksRef, newTask);
-      const taskId = taskDocRef.id;
-
-      if (columnId) {
-        const columnRef = doc(db, `projects/${projectId}/columns/${columnId}`);
-        await updateDoc(columnRef, {
-          tasks: arrayUnion(taskId),
-        });
-      }
-
-      return { id: taskId, ...newTask };
     } catch (error) {
       console.error('Error creating task:', error);
       return rejectWithValue('Failed to create task');
@@ -61,16 +81,13 @@ export const fetchBacklogTasks = createAsyncThunk(
     try {
       const tasksRef = collection(db, `projects/${projectId}/tasks`);
 
-      const q = query(tasksRef, where('status', '==', 'backlog'));
+      const q = query(tasksRef, where('status', '==', TaskStatus.backlog));
 
       const querySnapshot = await getDocs(q);
 
-      const tasks = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const { ids, data } = groupFirestoreDocsById(querySnapshot.docs);
 
-      return tasks;
+      return { ids, data };
     } catch (error) {
       console.error('Error fetching backlog tasks:', error);
       return rejectWithValue('Failed to fetch backlog tasks');
@@ -80,7 +97,8 @@ export const fetchBacklogTasks = createAsyncThunk(
 
 const initialState: ITasksState = {
   tasks: [],
-  backlogTasks: [],
+  backlogTaskIds: [],
+  backlogTasksData: {},
 };
 
 const tasksSlice = createSlice({
@@ -89,7 +107,8 @@ const tasksSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder.addCase(fetchBacklogTasks.fulfilled, (state, action) => {
-      state.backlogTasks = action.payload;
+      state.backlogTaskIds = action.payload.ids;
+      state.backlogTasksData = action.payload.data as BacklogTasksData;
     });
   },
 });
