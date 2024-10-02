@@ -13,6 +13,7 @@ import { db, storage } from '../../firebase/firebaseConfig';
 import { IProjectWithOwnerDetails, IProjectsState } from './projectsTypes';
 import { getAuth } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { fetchProjectColumns } from '../columns/columnsSlice';
 
 export const fetchProjects = createAsyncThunk(
   'projects/fetchProjects',
@@ -72,7 +73,10 @@ export const fetchProjects = createAsyncThunk(
 
 export const fetchProjectByKey = createAsyncThunk(
   'projects/fetchProjectByKey',
-  async (key: string, { rejectWithValue }) => {
+  async (
+    { key, fetchColumns }: { key: string; fetchColumns?: boolean },
+    { rejectWithValue, dispatch },
+  ) => {
     try {
       const projectKeyQuery = query(
         collection(db, 'projectKeys'),
@@ -89,6 +93,10 @@ export const fetchProjectByKey = createAsyncThunk(
 
       const projectRef = doc(db, 'projects', projectId);
       const projectSnapshot = await getDoc(projectRef);
+
+      if (fetchColumns) {
+        await dispatch(fetchProjectColumns(projectId));
+      }
 
       if (!projectSnapshot.exists()) {
         throw new Error('Project not found');

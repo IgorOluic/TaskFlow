@@ -35,7 +35,7 @@ export const ProjectLayout = () => {
 
   useEffect(() => {
     if (projectKey) {
-      dispatch(fetchProjectByKey(projectKey));
+      dispatch(fetchProjectByKey({ key: projectKey, fetchColumns: true }));
     }
   }, [projectKey]);
 
