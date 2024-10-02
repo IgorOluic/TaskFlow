@@ -4,7 +4,7 @@ import AvatarSelectionModal from '../../modals/AvatarSelectionModal';
 import DEFAULT_AVATARS, {
   DefaultAvatarIcon,
 } from '../../../constants/defaultAvatars';
-import { getRandomNumber } from '../../../utils/common';
+import { getRandomNumber } from '../../../utils/commonUtils';
 
 interface IconSelectionProps {
   setSelectedIcon: (id: number | null) => void;

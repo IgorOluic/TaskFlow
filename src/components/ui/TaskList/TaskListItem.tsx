@@ -1,30 +1,46 @@
-import { Center, HStack, Text } from '@chakra-ui/react';
-import SvgIcon from '../SvgIcon';
-import { useAppSelector } from '../../../hooks/useAppSelector';
-import { selectBacklogTaskById } from '../../../redux/tasks/tasksSelectors';
+import { HStack, Text } from '@chakra-ui/react';
+import UserAvatar from '../UserAvatar';
+import ColumnDropdown from '../ColumnDropdown';
+import TaskMenu from '../TaskMenu';
+import { ITask } from '../../../redux/tasks/tasksTypes';
 
 interface TaskListItemProps {
-  id: string;
   isLastItem: boolean;
+  task: ITask;
+  isBoard?: boolean;
 }
 
-const TaskListItem = ({ id, isLastItem }: TaskListItemProps) => {
-  const taskData = useAppSelector(selectBacklogTaskById(id));
-
+const TaskListItem = ({ task, isLastItem, isBoard }: TaskListItemProps) => {
   return (
     <HStack
-      justifyContent="space-between"
       w="full"
       borderBottomWidth={isLastItem ? 0 : 1}
       borderBottomColor="gray.300"
-      px={4}
+      pr={2}
+      pl={4}
       py={2}
+      justifyContent="space-between"
+      _hover={{
+        backgroundColor: 'purple.50',
+      }}
+      cursor="pointer"
     >
-      <Text>{taskData.summary}</Text>
+      <HStack>
+        <Text fontSize={12} fontWeight={700} color="gray.600">
+          {task.id}
+        </Text>
+        <Text fontSize={14} fontWeight={500}>
+          {task.summary}
+        </Text>
+      </HStack>
 
-      <Center w={6} h={6} borderRadius="full" backgroundColor="green">
-        <SvgIcon name="calendar" width="16px" height="16px" />
-      </Center>
+      <HStack justifySelf="flex-end" spacing={2}>
+        <ColumnDropdown small onChange={() => {}} />
+
+        <UserAvatar firstName="Igor" lastName="Oluic" />
+
+        <TaskMenu taskId={task.id} isBoard={isBoard} status={task.status} />
+      </HStack>
     </HStack>
   );
 };

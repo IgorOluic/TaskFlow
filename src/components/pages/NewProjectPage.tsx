@@ -11,7 +11,7 @@ import {
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { createNewProject } from '../../redux/projects/projectsSlice';
 import IconSelection from '../ui/IconSelection/IconSelection';
-import { dataURLtoBlob } from '../../utils/common';
+import { dataURLtoBlob } from '../../utils/commonUtils';
 
 const NewProjectPage = () => {
   const [name, setName] = useState('');

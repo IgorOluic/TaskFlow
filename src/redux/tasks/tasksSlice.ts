@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import {
   collection,
   doc,
@@ -6,10 +6,17 @@ import {
   where,
   getDocs,
   runTransaction,
+  updateDoc,
 } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
-import { BacklogTasksData, ITasksState, TaskStatus } from './tasksTypes';
-import { groupFirestoreDocsById } from '../../utils/data';
+import {
+  BacklogTasksData,
+  BoardTasksData,
+  ITasksState,
+  TaskStatus,
+} from './tasksTypes';
+import { groupFirestoreDocsById } from '../../utils/dataUtils';
+import { TASK_STATUS_FIELDS } from '../../constants/tasks';
 
 export const createTask = createAsyncThunk(
   'tasks/createTask',
@@ -75,6 +82,40 @@ export const createTask = createAsyncThunk(
   },
 );
 
+export const changeTaskStatus = createAsyncThunk(
+  'tasks/updateTaskStatus',
+  async (
+    {
+      projectId,
+      taskId,
+      newStatus,
+      oldStatus,
+    }: {
+      projectId: string;
+      taskId: string;
+      newStatus: TaskStatus;
+      oldStatus: TaskStatus;
+    },
+    { rejectWithValue, dispatch },
+  ) => {
+    try {
+      dispatch(setNewTaskStatus({ taskId, newStatus, oldStatus }));
+
+      const taskRef = doc(db, `projects/${projectId}/tasks/${taskId}`);
+
+      await updateDoc(taskRef, {
+        status: newStatus,
+        updatedAt: new Date().toISOString(),
+      });
+
+      return { taskId, newStatus };
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      return rejectWithValue('Failed to update task status');
+    }
+  },
+);
+
 export const fetchBacklogTasks = createAsyncThunk(
   'tasks/fetchBacklogTasks',
   async ({ projectId }: { projectId: string }, { rejectWithValue }) => {
@@ -95,22 +136,88 @@ export const fetchBacklogTasks = createAsyncThunk(
   },
 );
 
+export const fetchBoardTasks = createAsyncThunk(
+  'tasks/fetchBoardTasks',
+  async ({ projectId }: { projectId: string }, { rejectWithValue }) => {
+    try {
+      const tasksRef = collection(db, `projects/${projectId}/tasks`);
+
+      const q = query(tasksRef, where('status', '==', TaskStatus.active));
+
+      const querySnapshot = await getDocs(q);
+
+      console.log(querySnapshot.docs, 'omg');
+
+      const { ids, data } = groupFirestoreDocsById(querySnapshot.docs);
+
+      return { ids, data };
+    } catch (error) {
+      console.error('Error fetching backlog tasks:', error);
+      return rejectWithValue('Failed to fetch backlog tasks');
+    }
+  },
+);
+
 const initialState: ITasksState = {
   tasks: [],
   backlogTaskIds: [],
   backlogTasksData: {},
+  boardTaskIds: [],
+  boardTasksData: {},
 };
 
 const tasksSlice = createSlice({
   name: 'projects',
   initialState,
-  reducers: {},
+  reducers: {
+    setNewTaskStatus: (
+      state,
+      action: PayloadAction<{
+        taskId: string;
+        newStatus: TaskStatus;
+        oldStatus: TaskStatus;
+      }>,
+    ) => {
+      const { taskId, newStatus, oldStatus } = action.payload;
+
+      const oldTaskStatusFields = TASK_STATUS_FIELDS[oldStatus];
+      const newTaskStatusFields = TASK_STATUS_FIELDS[newStatus];
+
+      // Remove the taskId from old status ids
+      state[oldTaskStatusFields.ids] = state[oldTaskStatusFields.ids].filter(
+        (id) => id !== taskId,
+      );
+
+      // Remove the task data from old status data
+      const { [action.payload.taskId]: removedItem, ...newData } =
+        state[oldTaskStatusFields.data];
+      state[oldTaskStatusFields.data] = newData;
+
+      // Add the taskId to new status ids
+      state[newTaskStatusFields.ids] = [
+        ...state[newTaskStatusFields.ids],
+        taskId,
+      ];
+
+      // Add the task data to new status data
+      state[newTaskStatusFields.data] = {
+        ...state[newTaskStatusFields.data],
+        [taskId]: { ...removedItem, status: newStatus },
+      };
+    },
+  },
   extraReducers: (builder) => {
     builder.addCase(fetchBacklogTasks.fulfilled, (state, action) => {
       state.backlogTaskIds = action.payload.ids;
       state.backlogTasksData = action.payload.data as BacklogTasksData;
     });
+    builder.addCase(fetchBoardTasks.fulfilled, (state, action) => {
+      state.boardTaskIds = action.payload.ids;
+      state.boardTasksData = action.payload.data as BoardTasksData;
+    });
   },
 });
+
+export const { setNewTaskStatus } = tasksSlice.actions;
 
 export default tasksSlice.reducer;

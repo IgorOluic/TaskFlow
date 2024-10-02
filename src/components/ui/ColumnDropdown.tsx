@@ -1,5 +1,11 @@
-import React, { useMemo, useState } from 'react';
-import { FormLabel, HStack, Text, VStack } from '@chakra-ui/react';
+import { useMemo, useRef, useState } from 'react';
+import {
+  FormLabel,
+  HStack,
+  Text,
+  VStack,
+  useOutsideClick,
+} from '@chakra-ui/react';
 import SvgIcon from './SvgIcon';
 import { selectColumnsArray } from '../../redux/columns/columnsSelectors';
 import { useAppSelector } from '../../hooks/useAppSelector';
@@ -7,9 +13,10 @@ import { IColumn } from '../../redux/columns/columnsTypes';
 
 interface ColumnSelectProps {
   onChange: (id: string) => void;
+  small?: boolean;
 }
 
-const ColumnDropdown = ({ onChange }: ColumnSelectProps) => {
+const ColumnDropdown = ({ onChange, small }: ColumnSelectProps) => {
   const columns = useAppSelector(selectColumnsArray);
 
   const [selectedColumn, setSelectedColumn] = useState(columns[0]);
@@ -19,6 +26,9 @@ const ColumnDropdown = ({ onChange }: ColumnSelectProps) => {
   }, [columns, selectedColumn]);
 
   const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useOutsideClick({ ref, handler: () => setOpen(false) });
 
   const onClick = () => {
     setOpen(!open);
@@ -41,7 +51,7 @@ const ColumnDropdown = ({ onChange }: ColumnSelectProps) => {
         px={4}
         onClick={onColumnClick}
       >
-        <Text fontSize={14} fontWeight={500}>
+        <Text fontSize={small ? 12 : 14} fontWeight={500}>
           {column.name}
         </Text>
       </HStack>
@@ -55,21 +65,23 @@ const ColumnDropdown = ({ onChange }: ColumnSelectProps) => {
       w="fit-content"
       alignItems="flex-start"
       spacing={0}
+      ref={ref}
     >
-      <FormLabel>Status</FormLabel>
+      {!small && <FormLabel>Status</FormLabel>}
       <HStack
-        px={4}
-        py={1.5}
+        px={small ? 2 : 4}
+        py={small ? 0.5 : 1.5}
         bg="purple.600"
         alignItems="center"
         w="fit-content"
         borderRadius={5}
         cursor="pointer"
         onClick={onClick}
+        spacing={small ? 1 : 2}
       >
         <Text
           color="white"
-          fontSize={14}
+          fontSize={small ? 12 : 14}
           fontWeight={500}
           textTransform="uppercase"
         >
@@ -84,7 +96,8 @@ const ColumnDropdown = ({ onChange }: ColumnSelectProps) => {
           position="absolute"
           bg="white"
           boxShadow="md"
-          left={0}
+          right={small ? 0 : 'unset'}
+          left={small ? 'unset' : 0}
           zIndex={10}
           py={2}
           minW="250px"

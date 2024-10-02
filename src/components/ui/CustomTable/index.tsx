@@ -23,7 +23,7 @@ interface CustomTableProps {
 const CustomTable = ({
   columns,
   data,
-  renderRow: RenderRowComponent,
+  renderRow: RowComponent,
 }: CustomTableProps) => {
   const renderTableColumn = (
     column: ITableColumn,
@@ -37,7 +37,7 @@ const CustomTable = ({
   };
 
   const renderTableRow = (rowData: any, index: number) => {
-    return <RenderRowComponent key={index} rowData={rowData} />;
+    return <RowComponent key={index} rowData={rowData} />;
   };
 
   return (

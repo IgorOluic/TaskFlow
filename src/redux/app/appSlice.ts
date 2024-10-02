@@ -4,7 +4,7 @@ import {
   getBaseActionType,
   isPendingAction,
   isRejectedAction,
-} from '../../utils/reduxUtil';
+} from '../../utils/reduxUtils';
 
 const initialState: IAppState = {
   loading: [],

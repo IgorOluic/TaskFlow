@@ -1,19 +1,23 @@
 import { HStack, Text, VStack } from '@chakra-ui/react';
 import SvgIcon from '../SvgIcon';
 import { useMemo, useState } from 'react';
-import TaskListItem from './TaskListItem';
 
 interface TaskListProps {
   taskIds: string[];
   title: string;
+  renderItem: React.FC<{ id: string; isLastItem: boolean }>;
 }
 
-const TaskList = ({ taskIds, title }: TaskListProps) => {
+const TaskList = ({
+  taskIds,
+  title,
+  renderItem: ItemComponent,
+}: TaskListProps) => {
   const [collapsed, setCollapsed] = useState(false);
 
   const renderTaskItem = (id: string, index: number): JSX.Element => {
     const isLastItem = taskIds.length - 1 === index;
-    return <TaskListItem key={index} id={id} isLastItem={isLastItem} />;
+    return <ItemComponent key={index} id={id} isLastItem={isLastItem} />;
   };
 
   const nOfTasksText = useMemo(() => {

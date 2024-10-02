@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getDocs, collection, query, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
 import { ColumnsData, IColumnsState } from './columnsTypes';
-import { groupFirestoreDocsById } from '../../utils/data';
+import { groupFirestoreDocsById } from '../../utils/dataUtils';
 
 export const fetchProjectColumns = createAsyncThunk(
   'projects/fetchColumns',
