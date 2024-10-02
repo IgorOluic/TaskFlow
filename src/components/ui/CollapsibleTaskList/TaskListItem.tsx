@@ -1,16 +1,20 @@
 import { HStack, Text } from '@chakra-ui/react';
 import UserAvatar from '../UserAvatar';
 import ColumnDropdown from '../ColumnDropdown';
-import TaskMenu from '../TaskMenu';
-import { ITask } from '../../../redux/tasks/tasksTypes';
+import { TaskStatusDataFields } from '../../../redux/tasks/tasksTypes';
+import { useAppSelector } from '../../../hooks/useAppSelector';
+import { selectTaskByIdAndField } from '../../../redux/tasks/tasksSelectors';
+import TaskListItemMenu from './TaskListItemMenu';
 
 interface TaskListItemProps {
   isLastItem: boolean;
-  task: ITask;
-  isBoard?: boolean;
+  taskId: string;
+  dataField: TaskStatusDataFields;
 }
 
-const TaskListItem = ({ task, isLastItem, isBoard }: TaskListItemProps) => {
+const TaskListItem = ({ taskId, isLastItem, dataField }: TaskListItemProps) => {
+  const task = useAppSelector(selectTaskByIdAndField(dataField, taskId));
+
   return (
     <HStack
       w="full"
@@ -39,7 +43,7 @@ const TaskListItem = ({ task, isLastItem, isBoard }: TaskListItemProps) => {
 
         <UserAvatar firstName="Igor" lastName="Oluic" />
 
-        <TaskMenu taskId={task.id} isBoard={isBoard} status={task.status} />
+        <TaskListItemMenu taskId={task.id} status={task.status} />
       </HStack>
     </HStack>
   );

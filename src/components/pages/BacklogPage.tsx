@@ -6,8 +6,13 @@ import {
   fetchBacklogTasks,
   fetchBoardTasks,
 } from '../../redux/tasks/tasksSlice';
-import BacklogTasksList from '../renderers/BacklogTasksList';
-import BoardTasksList from '../renderers/BoardTasksList';
+import CollapsibleTaskList from '../ui/CollapsibleTaskList/CollapsibleTaskList';
+import {
+  BACKLOG_TASKS_DATA,
+  BACKLOG_TASK_IDS,
+  BOARD_TASKS_DATA,
+  BOARD_TASK_IDS,
+} from '../../constants/tasks';
 
 const BacklogPage = () => {
   const dispatch = useAppDispatch();
@@ -30,11 +35,19 @@ const BacklogPage = () => {
       pt={5}
       justifyContent="center"
     >
-      <BoardTasksList />
+      <CollapsibleTaskList
+        title="Board"
+        idsField={BOARD_TASK_IDS}
+        dataField={BOARD_TASKS_DATA}
+      />
 
       <Divider my={10} />
 
-      <BacklogTasksList />
+      <CollapsibleTaskList
+        title="Backlog"
+        idsField={BACKLOG_TASK_IDS}
+        dataField={BACKLOG_TASKS_DATA}
+      />
     </VStack>
   );
 };

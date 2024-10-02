@@ -1,24 +1,24 @@
 import { Center, Flex, Text, VStack, useOutsideClick } from '@chakra-ui/react';
-import SvgIcon from './SvgIcon';
+import { useAppSelector } from '../../../hooks/useAppSelector';
 import { useRef, useState } from 'react';
-import { useAppDispatch } from '../../hooks/useAppDispatch';
-import { changeTaskStatus } from '../../redux/tasks/tasksSlice';
-import { useAppSelector } from '../../hooks/useAppSelector';
-import { selectSelectedProject } from '../../redux/projects/projectsSelectors';
-import { TaskStatus } from '../../redux/tasks/tasksTypes';
+import { useAppDispatch } from '../../../hooks/useAppDispatch';
+import { TaskStatus } from '../../../redux/tasks/tasksTypes';
+import { selectSelectedProject } from '../../../redux/projects/projectsSelectors';
+import { changeTaskStatus } from '../../../redux/tasks/tasksSlice';
+import SvgIcon from '../SvgIcon';
 
 interface TaskMenuProps {
-  isBoard?: boolean;
   taskId: string;
   status: TaskStatus;
 }
 
-const TaskMenu = ({ isBoard, taskId, status }: TaskMenuProps) => {
+const TaskListItemMenu = ({ taskId, status }: TaskMenuProps) => {
   const dispatch = useAppDispatch();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
   const selectedProject = useAppSelector(selectSelectedProject);
+  const isInBoard = status === TaskStatus.active;
 
   useOutsideClick({ ref, handler: () => setOpen(false) });
 
@@ -31,7 +31,7 @@ const TaskMenu = ({ isBoard, taskId, status }: TaskMenuProps) => {
       changeTaskStatus({
         taskId,
         projectId: selectedProject?.id as string,
-        newStatus: isBoard ? TaskStatus.backlog : TaskStatus.active,
+        newStatus: isInBoard ? TaskStatus.backlog : TaskStatus.active,
         oldStatus: status,
       }),
     );
@@ -64,7 +64,7 @@ const TaskMenu = ({ isBoard, taskId, status }: TaskMenuProps) => {
           alignItems="flex-start"
         >
           <Flex onClick={onMoveToClick} bg="red" w="full" px={4}>
-            <Text>Move to {isBoard ? 'backlog' : 'board'}</Text>
+            <Text>Move to {isInBoard ? 'backlog' : 'board'}</Text>
           </Flex>
         </VStack>
       )}
@@ -72,4 +72,4 @@ const TaskMenu = ({ isBoard, taskId, status }: TaskMenuProps) => {
   );
 };
 
-export default TaskMenu;
+export default TaskListItemMenu;

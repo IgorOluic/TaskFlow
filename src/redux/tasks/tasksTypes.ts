@@ -10,8 +10,12 @@ export enum TaskStatus {
   backlog = 'BACKLOG',
 }
 
-type TaskStatusIdsFields = typeof BOARD_TASK_IDS | typeof BACKLOG_TASK_IDS;
-type TaskStatusDataFields = typeof BOARD_TASKS_DATA | typeof BACKLOG_TASKS_DATA;
+export type TaskStatusIdsFields =
+  | typeof BOARD_TASK_IDS
+  | typeof BACKLOG_TASK_IDS;
+export type TaskStatusDataFields =
+  | typeof BOARD_TASKS_DATA
+  | typeof BACKLOG_TASKS_DATA;
 
 export type TaskStatusFields = Record<
   TaskStatus,
