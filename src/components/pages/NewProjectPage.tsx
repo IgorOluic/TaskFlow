@@ -10,7 +10,7 @@ import {
 } from '@chakra-ui/react';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { createNewProject } from '../../redux/projects/projectsSlice';
-import IconSelection from '../ui/IconSelection/IconSelection';
+import IconSelection from '../ui/IconSelection';
 import { dataURLtoBlob } from '../../utils/commonUtils';
 
 const NewProjectPage = () => {

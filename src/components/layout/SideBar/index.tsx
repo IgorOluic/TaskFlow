@@ -1,11 +1,11 @@
 import { Divider, HStack, Text, VStack } from '@chakra-ui/react';
-import SideBarItem from './SideBarItem';
 import { memo } from 'react';
-import SVGS from '../../constants/SVGS';
-import { useAppSelector } from '../../hooks/useAppSelector';
-import { selectSelectedProject } from '../../redux/projects/projectsSelectors';
-import ProjectIcon from '../ui/ProjectIcon';
-import { TOP_BAR_HEIGHT } from '../../constants/layout';
+import SVGS from '../../../constants/SVGS';
+import { useAppSelector } from '../../../hooks/useAppSelector';
+import { selectSelectedProject } from '../../../redux/projects/projectsSelectors';
+import ProjectIcon from '../../ui/ProjectIcon';
+import { TOP_BAR_HEIGHT } from '../../../constants/layout';
+import SideBarItem from './SideBarItem';
 
 export type SidebarItemType = {
   name: string;

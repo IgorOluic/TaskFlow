@@ -1,9 +1,9 @@
 import { Flex, Text, VStack } from '@chakra-ui/react';
 import { memo, useState } from 'react';
-import { useAppDispatch } from '../../hooks/useAppDispatch';
-import { logoutUser } from '../../redux/auth/authSlice';
-import { useAppSelector } from '../../hooks/useAppSelector';
-import UserAvatar from '../ui/UserAvatar';
+import { useAppDispatch } from '../../../hooks/useAppDispatch';
+import { useAppSelector } from '../../../hooks/useAppSelector';
+import { logoutUser } from '../../../redux/auth/authSlice';
+import UserAvatar from '../../ui/UserAvatar';
 
 export const ProfileMenu = () => {
   const dispatch = useAppDispatch();

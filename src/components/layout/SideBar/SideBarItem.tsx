@@ -1,8 +1,8 @@
 import { Flex, HStack, Text } from '@chakra-ui/react';
 import { memo } from 'react';
-import SvgIcon from '../ui/SvgIcon';
-import SVGS from '../../constants/SVGS';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import SvgIcon from '../../ui/SvgIcon';
+import SVGS from '../../../constants/SVGS';
 
 type SideBarItemProps = {
   name: string;

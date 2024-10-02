@@ -6,7 +6,7 @@ import {
   fetchBacklogTasks,
   fetchBoardTasks,
 } from '../../redux/tasks/tasksSlice';
-import CollapsibleTaskList from '../ui/CollapsibleTaskList/CollapsibleTaskList';
+import CollapsibleTaskList from '../ui/CollapsibleTaskList';
 import {
   BACKLOG_TASKS_DATA,
   BACKLOG_TASK_IDS,

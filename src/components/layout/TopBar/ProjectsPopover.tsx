@@ -8,10 +8,10 @@ import {
   VStack,
   Divider,
 } from '@chakra-ui/react';
-import SvgIcon from '../ui/SvgIcon';
-import { useAppSelector } from '../../hooks/useAppSelector';
-import { IProject } from '../../redux/projects/projectsTypes';
 import { generatePath, useLocation, useNavigate } from 'react-router-dom';
+import { useAppSelector } from '../../../hooks/useAppSelector';
+import { IProject } from '../../../redux/projects/projectsTypes';
+import SvgIcon from '../../ui/SvgIcon';
 
 const ProjectsPopover = () => {
   const location = useLocation();

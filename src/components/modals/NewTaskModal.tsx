@@ -18,7 +18,7 @@ import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { useAppSelector } from '../../hooks/useAppSelector';
 import { createTask } from '../../redux/tasks/tasksSlice';
 import ColumnDropdown from '../ui/ColumnDropdown';
-import RichTextEditor from '../ui/RichTextEditor/RichTextEditor';
+import RichTextEditor from '../ui/RichTextEditor';
 import { useParams } from 'react-router-dom';
 
 const NewTaskModal = () => {

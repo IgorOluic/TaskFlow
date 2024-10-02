@@ -1,7 +1,7 @@
 import { VStack } from '@chakra-ui/react';
 import { Outlet } from 'react-router-dom';
-import TopBar from './TopBar';
 import { TOP_BAR_HEIGHT } from '../../constants/layout';
+import TopBar from './TopBar';
 
 export const TopBarLayout = () => {
   return (
