@@ -18,26 +18,32 @@ import {
 import { groupFirestoreDocsById } from '../../utils/dataUtils';
 import { TASK_STATUS_FIELDS } from '../../constants/tasks';
 import actions from '../../constants/actions';
+import { RootState } from '../store';
 
 export const createTask = createAsyncThunk(
   actions.createTask,
   async (
     {
       projectId,
-      projectKey,
       columnId,
       summary,
       description,
     }: {
       projectId: string;
-      projectKey: string;
       columnId?: string | null;
       summary: string;
       description: string;
     },
-    { rejectWithValue },
+    { rejectWithValue, getState },
   ) => {
     try {
+      const state = getState() as RootState;
+      const projectKey = state.projects.selectedProjectData?.key;
+
+      if (!projectKey) {
+        throw new Error('Cannot find the project key.');
+      }
+
       const projectRef = doc(db, `projects/${projectId}`);
       let taskId;
 
@@ -146,8 +152,6 @@ export const fetchBoardTasks = createAsyncThunk(
       const q = query(tasksRef, where('status', '==', TaskStatus.active));
 
       const querySnapshot = await getDocs(q);
-
-      console.log(querySnapshot.docs, 'omg');
 
       const { ids, data } = groupFirestoreDocsById(querySnapshot.docs);
 

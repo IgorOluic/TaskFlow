@@ -1,4 +1,4 @@
-import { ChangeEvent, useRef } from 'react';
+import { ChangeEvent, useRef, useState } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -11,7 +11,6 @@ import {
   Input,
   FormControl,
   FormLabel,
-  useDisclosure,
   VStack,
 } from '@chakra-ui/react';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
@@ -19,23 +18,29 @@ import { useAppSelector } from '../../hooks/useAppSelector';
 import { createTask } from '../../redux/tasks/tasksSlice';
 import ColumnDropdown from '../ui/ColumnDropdown';
 import RichTextEditor from '../ui/RichTextEditor';
-import { useParams } from 'react-router-dom';
+import { selectSelectedProjectId } from '../../redux/projects/projectsSelectors';
 
 const NewTaskModal = () => {
-  const { selectedProjectId } = useAppSelector((state) => state.projects);
-  const { projectKey } = useParams();
+  const dispatch = useAppDispatch();
+  const selectedProjectId = useAppSelector(selectSelectedProjectId);
 
   const newData = useRef({ summary: '', columnId: '', description: '' });
 
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const dispatch = useAppDispatch();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const onOpen = () => {
+    setIsOpen(true);
+  };
+
+  const onClose = () => {
+    setIsOpen(false);
+  };
 
   const handleCreateTask = () => {
-    if (selectedProjectId && projectKey) {
+    if (selectedProjectId) {
       dispatch(
         createTask({
           projectId: selectedProjectId,
-          projectKey,
           ...newData.current,
         }),
       );
@@ -58,38 +63,40 @@ const NewTaskModal = () => {
     <>
       <Button onClick={onOpen}>Add Task</Button>
 
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent h="80vh" minW="700px">
-          <ModalHeader>Create New Task</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody overflowY="scroll">
-            <VStack w="full" alignItems="flex-start" spacing={6}>
-              <ColumnDropdown onChange={onColumnChange} />
+      {isOpen && (
+        <Modal isOpen={isOpen} onClose={onClose}>
+          <ModalOverlay />
+          <ModalContent h="80vh" minW="700px">
+            <ModalHeader>Create New Task</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody overflowY="scroll">
+              <VStack w="full" alignItems="flex-start" spacing={6}>
+                <ColumnDropdown onChange={onColumnChange} />
 
-              <FormControl>
-                <FormLabel>Summary</FormLabel>
-                <Input
-                  onChange={onSummaryChange}
-                  placeholder="Enter summary"
-                  autoFocus
-                />
-              </FormControl>
+                <FormControl>
+                  <FormLabel>Summary</FormLabel>
+                  <Input
+                    onChange={onSummaryChange}
+                    placeholder="Enter summary"
+                    autoFocus
+                  />
+                </FormControl>
 
-              <RichTextEditor onChange={onDescriptionChange} />
-            </VStack>
-          </ModalBody>
+                <RichTextEditor onChange={onDescriptionChange} />
+              </VStack>
+            </ModalBody>
 
-          <ModalFooter>
-            <Button variant="ghost" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button colorScheme="blue" ml={3} onClick={handleCreateTask}>
-              Create
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+            <ModalFooter>
+              <Button variant="ghost" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button colorScheme="blue" ml={3} onClick={handleCreateTask}>
+                Create
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
     </>
   );
 };

@@ -1,11 +1,9 @@
-import { Divider, HStack, Text, VStack } from '@chakra-ui/react';
+import { Divider, VStack } from '@chakra-ui/react';
 import { memo } from 'react';
 import SVGS from '../../../constants/SVGS';
-import { useAppSelector } from '../../../hooks/useAppSelector';
-import { selectSelectedProject } from '../../../redux/projects/projectsSelectors';
-import ProjectIcon from '../../ui/ProjectIcon';
 import { TOP_BAR_HEIGHT } from '../../../constants/layout';
 import SideBarItem from './SideBarItem';
+import ProjectInfo from './ProjectInfo';
 
 export type SidebarItemType = {
   name: string;
@@ -18,35 +16,18 @@ type SideBarProps = {
 };
 
 export const SideBar = ({ items }: SideBarProps) => {
-  const selectedProject = useAppSelector(selectSelectedProject);
-
   return (
     <VStack
       height="calc(100vh - 56px)"
       position="fixed"
       top={`${TOP_BAR_HEIGHT}px`}
       width={242}
+      maxW={242}
       spacing={0}
       borderRightWidth={4}
       borderRightColor="gray.100"
     >
-      <HStack w="full" py={4} px={4}>
-        {selectedProject && (
-          <ProjectIcon
-            iconUrl={selectedProject.iconUrl}
-            defaultIconId={selectedProject.defaultIconId}
-            boxSize="40px"
-          />
-        )}
-        <VStack alignItems="flex-start" spacing={0}>
-          <Text fontSize={14} fontWeight={500}>
-            {selectedProject?.name}
-          </Text>
-          <Text fontSize={12} color="gray.600">
-            33 members
-          </Text>
-        </VStack>
-      </HStack>
+      <ProjectInfo />
 
       <Divider />
       <VStack h="full" w="full" spacing={0} py={6} px={4}>

@@ -224,6 +224,7 @@ export const createNewProject = createAsyncThunk(
 
 const initialState: IProjectsState = {
   selectedProjectId: null,
+  selectedProjectData: null,
   projects: [],
 };
 
@@ -242,6 +243,7 @@ const projectsSlice = createSlice({
       })
       .addCase(fetchProjectByKey.fulfilled, (state, action) => {
         state.selectedProjectId = action.payload.id;
+        state.selectedProjectData = action.payload;
       });
   },
 });

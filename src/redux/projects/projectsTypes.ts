@@ -16,6 +16,7 @@ export interface IProjectWithOwnerDetails extends IProject {
 }
 
 export interface IProjectsState {
-  selectedProjectId: string | null;
   projects: IProjectWithOwnerDetails[];
+  selectedProjectId: string | null;
+  selectedProjectData: IProjectWithOwnerDetails | null;
 }
