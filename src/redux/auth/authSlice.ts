@@ -7,6 +7,7 @@ import {
 import { auth, db } from '../../firebase/firebaseConfig';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { IAuthState, IUserData } from './authTypes';
+import actions from '../../constants/actions';
 
 const initialState: IAuthState = {
   user: null,
@@ -15,7 +16,7 @@ const initialState: IAuthState = {
 };
 
 export const registerUser = createAsyncThunk(
-  'auth/registerUser',
+  actions.registerUser,
   async (
     {
       email,
@@ -48,7 +49,7 @@ export const registerUser = createAsyncThunk(
 );
 
 export const loginUser = createAsyncThunk(
-  'auth/loginUser',
+  actions.loginUser,
   async (
     { email, password }: { email: string; password: string },
     { rejectWithValue },
@@ -88,7 +89,7 @@ export const loginUser = createAsyncThunk(
   },
 );
 
-export const logoutUser = createAsyncThunk('auth/logoutUser', async () => {
+export const logoutUser = createAsyncThunk(actions.logoutUser, async () => {
   await signOut(auth);
 });
 

@@ -17,9 +17,10 @@ import {
 } from './tasksTypes';
 import { groupFirestoreDocsById } from '../../utils/dataUtils';
 import { TASK_STATUS_FIELDS } from '../../constants/tasks';
+import actions from '../../constants/actions';
 
 export const createTask = createAsyncThunk(
-  'tasks/createTask',
+  actions.createTask,
   async (
     {
       projectId,
@@ -83,7 +84,7 @@ export const createTask = createAsyncThunk(
 );
 
 export const changeTaskStatus = createAsyncThunk(
-  'tasks/updateTaskStatus',
+  actions.changeTaskStatus,
   async (
     {
       projectId,
@@ -117,7 +118,7 @@ export const changeTaskStatus = createAsyncThunk(
 );
 
 export const fetchBacklogTasks = createAsyncThunk(
-  'tasks/fetchBacklogTasks',
+  actions.fetchBacklogTasks,
   async ({ projectId }: { projectId: string }, { rejectWithValue }) => {
     try {
       const tasksRef = collection(db, `projects/${projectId}/tasks`);
@@ -137,7 +138,7 @@ export const fetchBacklogTasks = createAsyncThunk(
 );
 
 export const fetchBoardTasks = createAsyncThunk(
-  'tasks/fetchBoardTasks',
+  actions.fetchBoardTasks,
   async ({ projectId }: { projectId: string }, { rejectWithValue }) => {
     try {
       const tasksRef = collection(db, `projects/${projectId}/tasks`);

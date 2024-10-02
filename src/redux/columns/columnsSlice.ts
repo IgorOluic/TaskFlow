@@ -3,9 +3,10 @@ import { getDocs, collection, query, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
 import { ColumnsData, IColumnsState } from './columnsTypes';
 import { groupFirestoreDocsById } from '../../utils/dataUtils';
+import actions from '../../constants/actions';
 
 export const fetchProjectColumns = createAsyncThunk(
-  'projects/fetchColumns',
+  actions.fetchProjectColumns,
   async (projectId: string, { rejectWithValue }) => {
     try {
       const columnsRef = collection(db, `projects/${projectId}/columns`);

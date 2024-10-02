@@ -14,9 +14,10 @@ import { IProjectWithOwnerDetails, IProjectsState } from './projectsTypes';
 import { getAuth } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { fetchProjectColumns } from '../columns/columnsSlice';
+import actions from '../../constants/actions';
 
 export const fetchProjects = createAsyncThunk(
-  'projects/fetchProjects',
+  actions.fetchProjects,
   async (_, { rejectWithValue }) => {
     try {
       const auth = getAuth();
@@ -72,7 +73,7 @@ export const fetchProjects = createAsyncThunk(
 );
 
 export const fetchProjectByKey = createAsyncThunk(
-  'projects/fetchProjectByKey',
+  actions.fetchProjectByKey,
   async (
     { key, fetchColumns }: { key: string; fetchColumns?: boolean },
     { rejectWithValue, dispatch },
@@ -133,7 +134,7 @@ export const fetchProjectByKey = createAsyncThunk(
 );
 
 export const createNewProject = createAsyncThunk(
-  'projects/addProjectToFirestore',
+  actions.createNewProject,
   async (
     {
       name,
