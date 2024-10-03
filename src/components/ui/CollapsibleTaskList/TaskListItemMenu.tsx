@@ -63,8 +63,13 @@ const TaskListItemMenu = ({ taskId, status }: TaskMenuProps) => {
           boxShadow="md"
           alignItems="flex-start"
         >
-          <Flex onClick={onMoveToClick} bg="red" w="full" px={4}>
-            <Text>Move to {isInBoard ? 'backlog' : 'board'}</Text>
+          <Flex onClick={onMoveToClick} w="full" px={4}>
+            <Text>
+              Move to{' '}
+              <Text as="span" fontWeight={600}>
+                {isInBoard ? 'Backlog' : 'Board'}
+              </Text>
+            </Text>
           </Flex>
         </VStack>
       )}
