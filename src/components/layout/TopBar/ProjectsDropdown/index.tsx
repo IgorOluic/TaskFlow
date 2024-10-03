@@ -36,7 +36,7 @@ const ProjectsDropdown = () => {
   };
 
   return (
-    <Box position="relative" ref={ref}>
+    <Box position="relative" ref={ref} className="no-select">
       <HStack
         outline="none"
         onClick={onToggle}

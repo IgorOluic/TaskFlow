@@ -1,8 +1,10 @@
 import { Flex, HStack, Text } from '@chakra-ui/react';
 import { memo } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import SvgIcon from '../../ui/SvgIcon';
 import SVGS from '../../../constants/SVGS';
+import { useAppSelector } from '../../../hooks/useAppSelector';
+import { selectSelectedProjectData } from '../../../redux/projects/projectsSelectors';
 
 type SideBarItemProps = {
   name: string;
@@ -12,13 +14,15 @@ type SideBarItemProps = {
 
 export const SideBarItem = ({ name, iconName, path }: SideBarItemProps) => {
   const location = useLocation();
-  const { projectKey } = useParams();
+  const selectedProjectData = useAppSelector(selectSelectedProjectData);
   const navigate = useNavigate();
 
   const isSelected = location.pathname.endsWith(path);
 
   const handleClick = () => {
-    navigate(`/projects/${projectKey}${path}`);
+    if (selectedProjectData?.key) {
+      navigate(`/projects/${selectedProjectData?.key}${path}`);
+    }
   };
 
   return (
@@ -36,6 +40,7 @@ export const SideBarItem = ({ name, iconName, path }: SideBarItemProps) => {
       onClick={handleClick}
       width="full"
       backgroundColor={isSelected ? 'purple.50' : 'transparent'}
+      className="no-select"
     >
       <Flex w="36px" h="36px" alignItems="center" justifyContent="center">
         <SvgIcon

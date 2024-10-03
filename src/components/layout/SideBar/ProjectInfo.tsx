@@ -17,7 +17,7 @@ export const ProjectInfo = () => {
   const loading = useIsLoading(actions.fetchProjectByKey);
 
   return (
-    <HStack w="full" px={4} h="80px" alignItems="center">
+    <HStack w="full" px={4} h="80px" alignItems="center" cursor="default">
       <Skeleton isLoaded={!loading} borderRadius={6}>
         <ProjectIcon
           iconUrl={selectedProject?.iconUrl as string}

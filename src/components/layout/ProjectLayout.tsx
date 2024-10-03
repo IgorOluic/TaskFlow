@@ -2,7 +2,7 @@ import { HStack, VStack } from '@chakra-ui/react';
 import { SideBar, SidebarItemType } from './SideBar';
 import { Outlet, useParams } from 'react-router-dom';
 import { SIDE_BAR_WIDTH } from '../../constants/layout';
-import { useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { fetchProjectByKey } from '../../redux/projects/projectsSlice';
 
@@ -29,16 +29,26 @@ const sideBarItems: SidebarItemType[] = [
   },
 ];
 
+const withProjectData = (WrappedComponent: React.ComponentType) => {
+  const ProjectDataWrapper = () => {
+    const { projectKey } = useParams();
+    const dispatch = useAppDispatch();
+
+    useEffect(() => {
+      if (projectKey) {
+        dispatch(fetchProjectByKey({ key: projectKey, fetchColumns: true }));
+      }
+    }, [projectKey, dispatch]);
+
+    return <WrappedComponent />;
+  };
+
+  ProjectDataWrapper.displayName = `withProjectData(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;
+
+  return ProjectDataWrapper;
+};
+
 export const ProjectLayout = () => {
-  const { projectKey } = useParams();
-  const dispatch = useAppDispatch();
-
-  useEffect(() => {
-    if (projectKey) {
-      dispatch(fetchProjectByKey({ key: projectKey, fetchColumns: true }));
-    }
-  }, [projectKey]);
-
   return (
     <HStack
       display="flex"
@@ -64,4 +74,4 @@ export const ProjectLayout = () => {
   );
 };
 
-export default ProjectLayout;
+export default withProjectData(memo(ProjectLayout));
