@@ -1,6 +1,6 @@
 import { FormLabel, VStack } from '@chakra-ui/react';
 import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css'; // import styles
+import 'react-quill/dist/quill.snow.css';
 import './RichTextEditor.css';
 
 const modules = {

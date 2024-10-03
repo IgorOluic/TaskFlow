@@ -6,7 +6,7 @@ import {
   Text,
   VStack,
 } from '@chakra-ui/react';
-import { Link as RouterLink } from 'react-router-dom'; // Assuming you're using React Router
+import { Link as RouterLink } from 'react-router-dom';
 import { useAppSelector } from '../../hooks/useAppSelector';
 import { selectSelectedProjectData } from '../../redux/projects/projectsSelectors';
 
