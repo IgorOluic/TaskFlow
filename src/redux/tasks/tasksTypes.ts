@@ -13,6 +13,7 @@ export enum TaskStatus {
 export type TaskStatusIdsFields =
   | typeof BOARD_TASK_IDS
   | typeof BACKLOG_TASK_IDS;
+
 export type TaskStatusDataFields =
   | typeof BOARD_TASKS_DATA
   | typeof BACKLOG_TASKS_DATA;
@@ -41,4 +42,5 @@ export interface ITasksState {
   backlogTasksData: BacklogTasksData;
   boardTaskIds: string[];
   boardTasksData: BoardTasksData;
+  search: string;
 }

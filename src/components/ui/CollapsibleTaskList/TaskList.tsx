@@ -4,7 +4,7 @@ import {
   TaskStatusIdsFields,
 } from '../../../redux/tasks/tasksTypes';
 import { useAppSelector } from '../../../hooks/useAppSelector';
-import { selectTaskIdsByField } from '../../../redux/tasks/tasksSelectors';
+import { selectFilteredTaskIdsByField } from '../../../redux/tasks/tasksSelectors';
 import TaskListItem from './TaskListItem';
 
 interface TaskListProps {
@@ -13,7 +13,9 @@ interface TaskListProps {
 }
 
 const TaskList = ({ idsField, dataField }: TaskListProps) => {
-  const taskIds = useAppSelector(selectTaskIdsByField(idsField));
+  const taskIds = useAppSelector(
+    selectFilteredTaskIdsByField(idsField, dataField),
+  );
 
   const renderTaskItem = (id: string, index: number): JSX.Element => {
     const isLastItem = taskIds.length - 1 === index;

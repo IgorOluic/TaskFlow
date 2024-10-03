@@ -96,6 +96,52 @@ const SVGS = {
       <path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z" />
     </svg>
   ),
+  magnifyingGlass: (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <g clipPath="url(#clip0_1222_37470)">
+        <path
+          d="M6 11.5C9.03757 11.5 11.5 9.03757 11.5 6C11.5 2.96243 9.03757 0.5 6 0.5C2.96243 0.5 0.5 2.96243 0.5 6C0.5 9.03757 2.96243 11.5 6 11.5Z"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M13.5 13.5L10 10"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
+      <defs>
+        <clipPath id="clip0_1222_37470">
+          <rect width="14" height="14" fill="" />
+        </clipPath>
+      </defs>
+    </svg>
+  ),
+  close: (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <g clipPath="url(#clip0_1222_37032)">
+        <path
+          d="M13.5 0.5L0.5 13.5"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M0.5 0.5L13.5 13.5"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
+      <defs>
+        <clipPath id="clip0_1222_37032">
+          <rect width="14" height="14" fill="white" />
+        </clipPath>
+      </defs>
+    </svg>
+  ),
 };
 
 export default SVGS;

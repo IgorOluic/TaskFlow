@@ -169,12 +169,16 @@ const initialState: ITasksState = {
   backlogTasksData: {},
   boardTaskIds: [],
   boardTasksData: {},
+  search: '',
 };
 
 const tasksSlice = createSlice({
   name: 'projects',
   initialState,
   reducers: {
+    setSearchTerm: (state, action: PayloadAction<{ search: string }>) => {
+      state.search = action.payload.search;
+    },
     setNewTaskStatus: (
       state,
       action: PayloadAction<{
@@ -223,6 +227,6 @@ const tasksSlice = createSlice({
   },
 });
 
-export const { setNewTaskStatus } = tasksSlice.actions;
+export const { setNewTaskStatus, setSearchTerm } = tasksSlice.actions;
 
 export default tasksSlice.reducer;

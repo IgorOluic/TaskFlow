@@ -13,6 +13,8 @@ import {
   BOARD_TASKS_DATA,
   BOARD_TASK_IDS,
 } from '../../constants/tasks';
+import Breadcrumbs from '../layout/Breadcrumbs';
+import TaskFilters from '../ui/TaskFilters';
 
 const BacklogPage = () => {
   const dispatch = useAppDispatch();
@@ -35,6 +37,9 @@ const BacklogPage = () => {
       pt={5}
       justifyContent="center"
     >
+      <Breadcrumbs />
+
+      <TaskFilters />
       <CollapsibleTaskList
         title="Board"
         idsField={BOARD_TASK_IDS}

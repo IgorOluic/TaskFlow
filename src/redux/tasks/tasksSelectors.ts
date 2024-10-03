@@ -7,6 +7,25 @@ const selectTasksSlice = (state: RootState) => state.tasks;
 export const selectTaskIdsByField = (field: TaskStatusIdsFields) =>
   createSelector([selectTasksSlice], (tasksSlice) => tasksSlice[field]);
 
+export const selectFilteredTaskIdsByField = (
+  idsField: TaskStatusIdsFields,
+  dataField: TaskStatusDataFields,
+) =>
+  createSelector(
+    [selectTasksSlice, selectTasksDataByField(dataField)],
+    (tasksSlice, tasksData) => {
+      const searchQuery = tasksSlice.search.toLowerCase();
+
+      return tasksSlice[idsField].filter((taskId) => {
+        const task = tasksData[taskId];
+        return (
+          task.summary.toLowerCase().includes(searchQuery) ||
+          task.id.toLowerCase().includes(searchQuery)
+        );
+      });
+    },
+  );
+
 export const selectTasksDataByField = (field: TaskStatusDataFields) =>
   createSelector([selectTasksSlice], (tasksSlice) => tasksSlice[field]);
 

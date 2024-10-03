@@ -24,6 +24,7 @@ const CollapsibleTaskList = ({ title, idsField, dataField }: TaskListProps) => {
       alignItems="flex-start"
       px={2}
       py={2}
+      className="no-select"
     >
       <HStack
         w="full"
