@@ -11,6 +11,11 @@ export interface IProject {
   defaultIconId: number | null;
 }
 
+export enum ProjectRoles {
+  owner = 'OWNER',
+  member = 'MEMBER',
+}
+
 export interface IProjectWithOwnerDetails extends IProject {
   ownerDetails: IUserData;
 }

@@ -8,6 +8,7 @@ export default {
   fetchProjects: 'projects/fetchProjects',
   fetchProjectByKey: 'projects/fetchProjectByKey',
   createNewProject: 'projects/createNewProject',
+  inviteToProject: 'projects/inviteToProject',
 
   // columns
   fetchProjectColumns: 'columns/fetchProjectColumns',
@@ -17,4 +18,9 @@ export default {
   changeTaskStatus: 'tasks/changeTaskStatus',
   fetchBacklogTasks: 'tasks/fetchBacklogTasks',
   fetchBoardTasks: 'tasks/fetchBoardTasks',
+
+  // invitations
+  fetchInvitations: 'invitations/fetchInvitations',
+  acceptInvitation: 'invitations/acceptInvitation',
+  denyInvitation: 'invitations/denyInvitation',
 };

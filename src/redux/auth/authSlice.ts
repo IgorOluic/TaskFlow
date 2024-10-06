@@ -82,6 +82,7 @@ export const loginUser = createAsyncThunk(
         firstName: userData.firstName,
         lastName: userData.lastName,
         email: userData.email,
+        createdAt: userData.createdAt,
       };
     } catch (error) {
       return rejectWithValue(null);

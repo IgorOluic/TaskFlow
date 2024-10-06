@@ -8,13 +8,20 @@ import {
   where,
   getDoc,
   runTransaction,
+  setDoc,
+  collectionGroup,
 } from 'firebase/firestore';
 import { db, storage } from '../../firebase/firebaseConfig';
-import { IProjectWithOwnerDetails, IProjectsState } from './projectsTypes';
+import {
+  IProjectWithOwnerDetails,
+  IProjectsState,
+  ProjectRoles,
+} from './projectsTypes';
 import { getAuth } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { fetchProjectColumns } from '../columns/columnsSlice';
 import actions from '../../constants/actions';
+import { RootState } from '../store';
 
 export const fetchProjects = createAsyncThunk(
   actions.fetchProjects,
@@ -27,24 +34,43 @@ export const fetchProjects = createAsyncThunk(
         throw new Error('User is not authenticated');
       }
 
-      const projectQuery = query(
-        collection(db, 'projects'),
-        where('users', 'array-contains', currentUser.uid),
+      // Query the 'members' subcollection across all projects where the current user is a member
+      const memberProjectsQuery = query(
+        collectionGroup(db, 'members'),
+        where('userId', '==', currentUser.uid),
       );
 
-      const querySnapshot = await getDocs(projectQuery);
+      const memberQuerySnapshot = await getDocs(memberProjectsQuery);
+
+      if (memberQuerySnapshot.empty) {
+        return [];
+      }
 
       const projects = await Promise.all(
-        querySnapshot.docs.map(async (docSnapshot) => {
-          const data = docSnapshot.data();
+        memberQuerySnapshot.docs.map(async (docSnapshot) => {
+          const projectId = docSnapshot.ref.parent.parent?.id;
 
-          const createdAt = data.createdAt?.toDate
-            ? data.createdAt.toDate().toISOString()
+          if (!projectId) {
+            throw new Error('Project ID not found.');
+          }
+
+          const projectRef = doc(db, 'projects', projectId);
+          const projectSnapshot = await getDoc(projectRef);
+
+          if (!projectSnapshot.exists()) {
+            throw new Error(`Project ${projectId} does not exist`);
+          }
+
+          const projectData = projectSnapshot.data();
+          const createdAt = projectData?.createdAt?.toDate
+            ? projectData.createdAt.toDate().toISOString()
             : null;
 
           let ownerDetails = null;
-          if (data.owner) {
-            const ownerDoc = await getDoc(doc(db, 'users', data.owner));
+          if (projectData?.ownerId) {
+            const ownerDoc = await getDoc(
+              doc(db, 'users', projectData.ownerId),
+            );
             if (ownerDoc.exists()) {
               ownerDetails = ownerDoc.data();
 
@@ -57,8 +83,8 @@ export const fetchProjects = createAsyncThunk(
           }
 
           return {
-            id: docSnapshot.id,
-            ...data,
+            id: projectId,
+            ...projectData,
             createdAt,
             ownerDetails,
           } as IProjectWithOwnerDetails;
@@ -67,7 +93,7 @@ export const fetchProjects = createAsyncThunk(
 
       return projects;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error || 'Failed to fetch projects');
     }
   },
 );
@@ -160,6 +186,7 @@ export const createNewProject = createAsyncThunk(
       const projectKeyRef = doc(db, 'projectKeys', projectKey);
 
       return await runTransaction(db, async (transaction) => {
+        // Ensure the project key is unique
         const projectKeySnapshot = await transaction.get(projectKeyRef);
 
         if (projectKeySnapshot.exists()) {
@@ -171,26 +198,29 @@ export const createNewProject = createAsyncThunk(
         const projectRef = doc(collection(db, 'projects'));
         let projectIconUrl = null;
 
+        // Upload project icon if provided
         if (image) {
           const imageRef = ref(storage, `project-icons/${projectRef.id}`);
           await uploadBytes(imageRef, image);
           projectIconUrl = await getDownloadURL(imageRef);
         }
 
+        // Create the project document (without owner and users fields)
         transaction.set(projectRef, {
           name,
           key: projectKey,
           createdAt: new Date(),
-          owner: currentUser.uid,
-          users: [currentUser.uid],
           iconUrl: projectIconUrl, // Use the image URL if uploaded, otherwise use default icon
           defaultIconId: image ? null : defaultIconId,
+          ownerId: currentUser.uid,
         });
 
+        // Store the project key reference
         transaction.set(projectKeyRef, {
           projectId: projectRef.id,
         });
 
+        // Create initial columns for the project
         const batch = writeBatch(db);
         const columns = [
           { name: 'To Do', order: 1, tasks: [] },
@@ -206,8 +236,21 @@ export const createNewProject = createAsyncThunk(
           batch.set(columnRef, column);
         });
 
+        console.log('fails here');
+
+        const memberRef = doc(
+          collection(db, `projects/${projectRef.id}/members`),
+          currentUser.uid,
+        );
+        batch.set(memberRef, {
+          userId: currentUser.uid,
+          role: ProjectRoles.owner,
+          addedAt: new Date(),
+        });
+
         await batch.commit();
 
+        // Return the project data
         return {
           name,
           id: projectRef.id,
@@ -218,6 +261,52 @@ export const createNewProject = createAsyncThunk(
     } catch (error) {
       console.log(error);
       return rejectWithValue(error);
+    }
+  },
+);
+
+export const inviteToProject = createAsyncThunk(
+  actions.inviteToProject,
+  async (
+    {
+      email,
+    }: {
+      email: string;
+    },
+    { getState },
+  ) => {
+    try {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      const state = getState() as RootState;
+      const projectId = state.projects.selectedProjectId;
+
+      if (!currentUser) {
+        throw new Error('User is not authenticated');
+      }
+
+      if (!projectId) {
+        throw new Error('No project selected');
+      }
+
+      const projectRef = doc(db, 'projects', projectId);
+      const projectDoc = await getDoc(projectRef);
+
+      if (!projectDoc.exists()) {
+        throw new Error('Project does not exist');
+      }
+
+      const invitationId = `${projectId}_${email}`;
+      const invitationRef = doc(db, 'invitations', invitationId);
+
+      await setDoc(invitationRef, {
+        projectId,
+        inviterId: currentUser.uid,
+        invitee: email,
+        createdAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error sending invitation:', error);
     }
   },
 );

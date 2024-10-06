@@ -4,6 +4,7 @@ import SVGS from '../../../constants/SVGS';
 import { TOP_BAR_HEIGHT } from '../../../constants/layout';
 import SideBarItem from './SideBarItem';
 import ProjectInfo from './ProjectInfo';
+import InvitePeopleModal from '../../modals/InvitePeople';
 
 export type SidebarItemType = {
   name: string;
@@ -26,6 +27,7 @@ export const SideBar = ({ items }: SideBarProps) => {
       spacing={0}
       borderRightWidth={4}
       borderRightColor="gray.100"
+      pb={10}
     >
       <ProjectInfo />
 
@@ -42,6 +44,8 @@ export const SideBar = ({ items }: SideBarProps) => {
           );
         })}
       </VStack>
+
+      <InvitePeopleModal />
     </VStack>
   );
 };

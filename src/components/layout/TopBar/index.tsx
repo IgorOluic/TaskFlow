@@ -5,6 +5,7 @@ import { fetchProjects } from '../../../redux/projects/projectsSlice';
 import NewTaskModal from '../../modals/NewTaskModal';
 import ProfileMenu from './ProfileMenu';
 import ProjectsDropdown from './ProjectsDropdown';
+import Notifications from './Notifications';
 
 export const TopBar = () => {
   const dispatch = useAppDispatch();
@@ -44,7 +45,10 @@ export const TopBar = () => {
         <NewTaskModal />
       </HStack>
 
-      <ProfileMenu />
+      <HStack>
+        <Notifications />
+        <ProfileMenu />
+      </HStack>
     </HStack>
   );
 };

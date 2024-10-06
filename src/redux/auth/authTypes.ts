@@ -2,6 +2,7 @@ export interface IUserData {
   firstName: string;
   email: string;
   lastName: string;
+  createdAt: string;
 }
 
 export interface IUserAuth {

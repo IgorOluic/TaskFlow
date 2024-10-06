@@ -6,6 +6,7 @@ import authReducer from './auth/authSlice';
 import projectsReducer from './projects/projectsSlice';
 import columnsReducer from './columns/columnsSlice';
 import tasksReducer from './tasks/tasksSlice';
+import invitationsReducer from './invitations/invitationsSlice';
 
 const persistConfig = {
   key: 'root',
@@ -21,6 +22,7 @@ const store = configureStore({
     projects: projectsReducer,
     columns: columnsReducer,
     tasks: tasksReducer,
+    invitations: invitationsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
