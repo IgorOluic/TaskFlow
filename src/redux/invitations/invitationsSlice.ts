@@ -166,6 +166,11 @@ const invitationsSlice = createSlice({
     builder.addCase(fetchInvitations.fulfilled, (state, action) => {
       state.invitations = action.payload;
     });
+    builder.addCase(acceptInvitation.fulfilled, (state, action) => {
+      state.invitations = state.invitations.filter(
+        (invitation) => invitation.id !== action.payload,
+      );
+    });
     builder.addCase(denyInvitation.fulfilled, (state, action) => {
       state.invitations = state.invitations.filter(
         (invitation) => invitation.id !== action.payload,
