@@ -6,6 +6,7 @@ import { IMember } from '../../../redux/members/membersTypes';
 import { useAppDispatch } from '../../../hooks/useAppDispatch';
 import { setAssigneeSearch } from '../../../redux/members/membersSlice';
 import UserAvatar from '../UserAvatar';
+import useVisibilityControl from '../../../hooks/useVisibilityControl';
 
 interface AssigneeSelectionProps {
   withLabel?: boolean;
@@ -21,16 +22,16 @@ const AssigneeSelection = ({
   initialSelection,
 }: AssigneeSelectionProps) => {
   const dispatch = useAppDispatch();
-  const [isOpen, setIsOpen] = useState(false);
-  const onOpen = () => setIsOpen(true);
-  const onClose = () => {
+  const { isOpen, onOpen, onClose } = useVisibilityControl();
+
+  const handleClose = () => {
     dispatch(setAssigneeSearch(''));
-    setIsOpen(false);
+    onClose();
   };
 
   const ref = useRef(null);
 
-  useOutsideClick({ ref, handler: onClose });
+  useOutsideClick({ ref, handler: handleClose });
 
   const [selectedItem, setSelectedItem] = useState<IMember | null>(
     initialSelection || null,
@@ -39,7 +40,7 @@ const AssigneeSelection = ({
   const handleItemClick = (item: IMember | null) => {
     onAssigneeChange(item ? item.userId : null);
     setSelectedItem(item);
-    onClose();
+    handleClose();
   };
 
   return (

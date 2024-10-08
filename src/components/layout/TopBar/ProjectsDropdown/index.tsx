@@ -6,28 +6,22 @@ import {
   Box,
   useOutsideClick,
 } from '@chakra-ui/react';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { useAppSelector } from '../../../../hooks/useAppSelector';
 import { selectProjects } from '../../../../redux/projects/projectsSelectors';
 import { IProject } from '../../../../redux/projects/projectsTypes';
 import SvgIcon from '../../../ui/SvgIcon';
 import DropdownProjectItem from './DropdownProjectItem';
 import CustomLink from '../../../ui/CustomLink';
+import useVisibilityControl from '../../../../hooks/useVisibilityControl';
 
 const ProjectsDropdown = () => {
-  const projects = useAppSelector(selectProjects);
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, onToggle, onClose } = useVisibilityControl();
   const ref = useRef(null);
 
-  const onToggle = () => {
-    setIsOpen(!isOpen);
-  };
-
-  const onClose = () => {
-    setIsOpen(false);
-  };
-
   useOutsideClick({ ref, handler: onClose });
+
+  const projects = useAppSelector(selectProjects);
 
   const renderProjectItem = (project: IProject, index: number): JSX.Element => {
     return (

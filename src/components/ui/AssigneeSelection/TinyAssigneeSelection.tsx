@@ -1,5 +1,5 @@
 import { Box, VStack, useOutsideClick } from '@chakra-ui/react';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { useAppDispatch } from '../../../hooks/useAppDispatch';
 import UserAvatar, { UserAvatarProps } from '../UserAvatar';
 import AssigneeSelection from '.';
@@ -7,6 +7,7 @@ import { useAppSelector } from '../../../hooks/useAppSelector';
 import { selectMemberById } from '../../../redux/members/membersSelectors';
 import { setTaskAssignee } from '../../../redux/tasks/tasksSlice';
 import { TaskStatusDataFields } from '../../../redux/tasks/tasksTypes';
+import useVisibilityControl from '../../../hooks/useVisibilityControl';
 
 interface TinyAssigneeSelectionProps extends UserAvatarProps {
   taskId: string;
@@ -21,19 +22,15 @@ const TinyAssigneeSelection = ({
   ...props
 }: TinyAssigneeSelectionProps) => {
   const dispatch = useAppDispatch();
+  const { isOpen, onOpen, onClose } = useVisibilityControl();
   const memberData = useAppSelector(selectMemberById(assigneeId));
-  const [isOpen, setIsOpen] = useState(false);
   const ref = useRef(null);
 
-  const onOpen = () => {
-    setIsOpen(true);
-  };
-
-  useOutsideClick({ ref, handler: () => setIsOpen(false) });
+  useOutsideClick({ ref, handler: onClose });
 
   const onAssigneeChange = (memberId: string | null) => {
     dispatch(setTaskAssignee({ taskId, newAssigneeId: memberId, dataField }));
-    setIsOpen(false);
+    onClose();
   };
 
   return (

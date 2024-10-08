@@ -1,4 +1,4 @@
-import { ChangeEvent, useRef, useState } from 'react';
+import { ChangeEvent, useRef } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -15,23 +15,16 @@ import {
 } from '@chakra-ui/react';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { inviteToProject } from '../../redux/projects/projectsSlice';
+import useVisibilityControl from '../../hooks/useVisibilityControl';
 
 const InvitePeopleModal = () => {
   const dispatch = useAppDispatch();
+  const { isOpen, onOpen, onClose } = useVisibilityControl();
+
   const emailValue = useRef('');
 
   const onEmailValueChange = (e: ChangeEvent<HTMLInputElement>) => {
     emailValue.current = e.target.value;
-  };
-
-  const [isOpen, setIsOpen] = useState(false);
-
-  const onOpen = () => {
-    setIsOpen(true);
-  };
-
-  const onClose = () => {
-    setIsOpen(false);
   };
 
   const handleAddClick = () => {

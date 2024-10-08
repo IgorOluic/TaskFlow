@@ -1,19 +1,19 @@
-import { Flex, Text, VStack } from '@chakra-ui/react';
-import { memo, useState } from 'react';
+import { Flex, Text, VStack, useOutsideClick } from '@chakra-ui/react';
+import { memo, useRef } from 'react';
 import { useAppDispatch } from '../../../hooks/useAppDispatch';
 import { useAppSelector } from '../../../hooks/useAppSelector';
 import { logoutUser } from '../../../redux/auth/authSlice';
 import UserAvatar from '../../ui/UserAvatar';
+import useVisibilityControl from '../../../hooks/useVisibilityControl';
 
 export const ProfileMenu = () => {
   const dispatch = useAppDispatch();
-  const [open, setOpen] = useState(false);
+  const { isOpen, onClose, onToggle } = useVisibilityControl();
+  const ref = useRef(null);
+
+  useOutsideClick({ ref, handler: onClose });
 
   const { user } = useAppSelector((state) => state.auth);
-
-  const handleProfileClick = (): void => {
-    setOpen(!open);
-  };
 
   const handleLogoutClick = (): void => {
     dispatch(logoutUser());
@@ -26,13 +26,14 @@ export const ProfileMenu = () => {
       borderRadius="full"
       alignItems="center"
       justifyContent="center"
-      onClick={handleProfileClick}
+      onClick={onToggle}
       position="relative"
       cursor="pointer"
+      ref={ref}
     >
       <UserAvatar firstName={user?.firstName} lastName={user?.lastName} />
 
-      {open && (
+      {isOpen && (
         <VStack
           position="absolute"
           top={12}

@@ -9,22 +9,15 @@ import {
   VStack,
   useOutsideClick,
 } from '@chakra-ui/react';
-import { memo, useRef, useState } from 'react';
+import { memo, useRef } from 'react';
 import SvgIcon from '../../../ui/SvgIcon';
 import InvitationList from './InvitationList';
 import NotificationList from './NotificationList';
+import useVisibilityControl from '../../../../hooks/useVisibilityControl';
 
 export const Notifications = () => {
-  const [open, setOpen] = useState(false);
+  const { isOpen, onToggle, onClose } = useVisibilityControl();
   const ref = useRef(null);
-
-  const handleProfileClick = (): void => {
-    setOpen(!open);
-  };
-
-  const onClose = () => {
-    setOpen(false);
-  };
 
   useOutsideClick({ ref, handler: onClose });
 
@@ -38,11 +31,11 @@ export const Notifications = () => {
       position="relative"
       ref={ref}
     >
-      <Center cursor="pointer" onClick={handleProfileClick}>
+      <Center cursor="pointer" onClick={onToggle}>
         <SvgIcon name="bell" fill="gray.500" width="22px" height="22px" />
       </Center>
 
-      {open && (
+      {isOpen && (
         <VStack
           position="absolute"
           top="100%"

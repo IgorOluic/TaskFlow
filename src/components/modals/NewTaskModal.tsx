@@ -1,4 +1,4 @@
-import { ChangeEvent, useRef, useState } from 'react';
+import { ChangeEvent, useRef } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -20,9 +20,11 @@ import ColumnDropdown from '../ui/ColumnDropdown';
 import RichTextEditor from '../ui/RichTextEditor';
 import { selectSelectedProjectId } from '../../redux/projects/projectsSelectors';
 import AssigneeSelection from '../ui/AssigneeSelection';
+import useVisibilityControl from '../../hooks/useVisibilityControl';
 
 const NewTaskModal = () => {
   const dispatch = useAppDispatch();
+  const { isOpen, onOpen, onClose } = useVisibilityControl();
   const selectedProjectId = useAppSelector(selectSelectedProjectId);
 
   const newData = useRef<{
@@ -36,16 +38,6 @@ const NewTaskModal = () => {
     description: '',
     assignee: null,
   });
-
-  const [isOpen, setIsOpen] = useState(false);
-
-  const onOpen = () => {
-    setIsOpen(true);
-  };
-
-  const onClose = () => {
-    setIsOpen(false);
-  };
 
   const handleCreateTask = () => {
     if (selectedProjectId) {

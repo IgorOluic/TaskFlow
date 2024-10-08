@@ -10,6 +10,7 @@ import SvgIcon from './SvgIcon';
 import { selectColumnsArray } from '../../redux/columns/columnsSelectors';
 import { useAppSelector } from '../../hooks/useAppSelector';
 import { IColumn } from '../../redux/columns/columnsTypes';
+import useVisibilityControl from '../../hooks/useVisibilityControl';
 
 interface ColumnSelectProps {
   onChange: (id: string) => void;
@@ -22,6 +23,7 @@ const ColumnDropdown = ({
   small,
   initialColumn,
 }: ColumnSelectProps) => {
+  const { isOpen, onToggle, onClose } = useVisibilityControl();
   const columns = useAppSelector(selectColumnsArray);
 
   const [selectedColumn, setSelectedColumn] = useState(
@@ -34,20 +36,15 @@ const ColumnDropdown = ({
     return columns.filter((column) => column.id !== selectedColumn.id);
   }, [columns, selectedColumn]);
 
-  const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
-  useOutsideClick({ ref, handler: () => setOpen(false) });
-
-  const onClick = () => {
-    setOpen(!open);
-  };
+  useOutsideClick({ ref, handler: onClose });
 
   const renderSelectionItem = (column: IColumn, index: number) => {
     const onColumnClick = () => {
       setSelectedColumn(column);
       onChange(column.id);
-      setOpen(false);
+      onClose();
     };
 
     return (
@@ -85,7 +82,7 @@ const ColumnDropdown = ({
         w="fit-content"
         borderRadius={5}
         cursor="pointer"
-        onClick={onClick}
+        onClick={onToggle}
         spacing={small ? 1 : 2}
       >
         <Text
@@ -100,7 +97,7 @@ const ColumnDropdown = ({
         <SvgIcon name="chevronDown" height="12px" width="12px" fill="white" />
       </HStack>
 
-      {open && (
+      {isOpen && (
         <VStack
           position="absolute"
           bg="white"
