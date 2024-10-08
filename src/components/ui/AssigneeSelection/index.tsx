@@ -10,11 +10,15 @@ import UserAvatar from '../UserAvatar';
 interface AssigneeSelectionProps {
   withLabel?: boolean;
   onAssigneeChange: (value: string | null) => void;
+  tiny?: boolean;
+  initialSelection?: IMember | null;
 }
 
 const AssigneeSelection = ({
   withLabel,
   onAssigneeChange,
+  tiny,
+  initialSelection,
 }: AssigneeSelectionProps) => {
   const dispatch = useAppDispatch();
   const [isOpen, setIsOpen] = useState(false);
@@ -28,7 +32,9 @@ const AssigneeSelection = ({
 
   useOutsideClick({ ref, handler: onClose });
 
-  const [selectedItem, setSelectedItem] = useState<IMember | null>(null);
+  const [selectedItem, setSelectedItem] = useState<IMember | null>(
+    initialSelection || null,
+  );
 
   const handleItemClick = (item: IMember | null) => {
     onAssigneeChange(item ? item.userId : null);
@@ -37,7 +43,13 @@ const AssigneeSelection = ({
   };
 
   return (
-    <VStack alignItems="flex-start" spacing={0} position="relative" ref={ref}>
+    <VStack
+      alignItems="flex-start"
+      spacing={0}
+      position="relative"
+      ref={ref}
+      bg={tiny ? 'white' : 'transparent'}
+    >
       {withLabel && <FormLabel>Assignee</FormLabel>}
 
       <AssigneeSelectionInput
@@ -57,7 +69,9 @@ const AssigneeSelection = ({
         }
       />
 
-      {isOpen && <AssigneeSelectionList onItemClick={handleItemClick} />}
+      {isOpen && (
+        <AssigneeSelectionList onItemClick={handleItemClick} tiny={tiny} />
+      )}
     </VStack>
   );
 };

@@ -19,6 +19,7 @@ export default {
   fetchBacklogTasks: 'tasks/fetchBacklogTasks',
   fetchBoardTasks: 'tasks/fetchBoardTasks',
   moveTaskToColumn: 'tasks/moveTaskToColumn',
+  setTaskAssignee: 'tasks/setTaskAssignee',
 
   // invitations
   fetchInvitations: 'invitations/fetchInvitations',
@@ -27,4 +28,5 @@ export default {
 
   // members
   fetchProjectMembers: 'members/fetchProjectMembers',
+  trackProjectMembers: 'members/trackProjectMembers',
 };

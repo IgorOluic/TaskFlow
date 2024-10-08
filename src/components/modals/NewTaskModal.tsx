@@ -1,4 +1,4 @@
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useRef, useState } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -20,7 +20,6 @@ import ColumnDropdown from '../ui/ColumnDropdown';
 import RichTextEditor from '../ui/RichTextEditor';
 import { selectSelectedProjectId } from '../../redux/projects/projectsSelectors';
 import AssigneeSelection from '../ui/AssigneeSelection';
-import { fetchProjectMembers } from '../../redux/members/membersSlice';
 
 const NewTaskModal = () => {
   const dispatch = useAppDispatch();
@@ -74,13 +73,6 @@ const NewTaskModal = () => {
   const onAssigneeChange = (value: string | null) => {
     newData.current = { ...newData.current, assignee: value };
   };
-
-  useEffect(() => {
-    if (selectedProjectId && isOpen) {
-      console.log('called');
-      dispatch(fetchProjectMembers(selectedProjectId));
-    }
-  }, [isOpen]);
 
   return (
     <>

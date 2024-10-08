@@ -46,8 +46,6 @@ export const fetchProjectMembers = createAsyncThunk(
         }),
       );
 
-      console.log(result, 'Fetched members and data');
-
       return result;
     } catch (error) {
       console.error('Error fetching project members:', error);
@@ -69,6 +67,13 @@ const membersSlice = createSlice({
     setAssigneeSearch: (state, action: PayloadAction<string>) => {
       state.assigneeSearch = action.payload;
     },
+    updateProjectMembers: (
+      state,
+      action: PayloadAction<{ ids: string[]; data: Record<string, IMember> }>,
+    ) => {
+      state.projectMembers = action.payload.data;
+      state.projectMemberIds = action.payload.ids;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchProjectMembers.fulfilled, (state, action) => {
@@ -78,5 +83,5 @@ const membersSlice = createSlice({
   },
 });
 
-export const { setAssigneeSearch } = membersSlice.actions;
+export const { setAssigneeSearch, updateProjectMembers } = membersSlice.actions;
 export default membersSlice.reducer;

@@ -34,7 +34,7 @@ const BacklogPage = () => {
       w="full"
       alignItems="flex-start"
       px={5}
-      pt={5}
+      py={5}
       justifyContent="center"
     >
       <Breadcrumbs />

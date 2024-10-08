@@ -3,7 +3,6 @@ import { RootState } from '../store';
 
 const selectMembersSlice = (state: RootState) => state.members;
 
-// Select project members data
 export const selectMembersData = createSelector(
   [selectMembersSlice],
   (membersSlice) => membersSlice.projectMembers,
@@ -29,5 +28,10 @@ export const selectFilteredMemberIds = createSelector(
   },
 );
 
-export const selectMemberById = (id: string) =>
-  createSelector([selectMembersData], (membersData) => membersData[id]);
+export const selectMemberById = (id: string | null) =>
+  createSelector([selectMembersData], (membersData) => {
+    if (!id || !membersData) {
+      return null;
+    }
+    return membersData[id] || null;
+  });

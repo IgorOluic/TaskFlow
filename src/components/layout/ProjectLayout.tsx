@@ -5,6 +5,7 @@ import { SIDE_BAR_WIDTH } from '../../constants/layout';
 import { memo, useEffect } from 'react';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { fetchProjectByKey } from '../../redux/projects/projectsSlice';
+import { useTrackProjectMembers } from '../../hooks/useTrackProjectMembers';
 
 const sideBarItems: SidebarItemType[] = [
   {
@@ -39,6 +40,8 @@ const withProjectData = (WrappedComponent: React.ComponentType) => {
         dispatch(fetchProjectByKey({ key: projectKey, fetchColumns: true }));
       }
     }, [projectKey, dispatch]);
+
+    useTrackProjectMembers();
 
     return <WrappedComponent />;
   };

@@ -2,12 +2,13 @@ import React from 'react';
 import { Box, BoxProps, HStack, Text } from '@chakra-ui/react';
 import SvgIcon from './SvgIcon';
 
-interface UserAvatarProps {
+export interface UserAvatarProps {
   firstName?: string;
   lastName?: string;
   showFullName?: boolean;
   size?: BoxProps['width'];
   unassigned?: boolean;
+  onClick?: () => void;
 }
 
 const UserAvatar: React.FC<UserAvatarProps> = ({
@@ -16,14 +17,20 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
   showFullName,
   size = 7,
   unassigned,
+  onClick,
 }) => {
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    }
+  };
   const initials =
     `${(firstName || '')[0]}${(lastName || '')[0]}`.toUpperCase();
 
   return (
-    <HStack>
+    <HStack onClick={handleClick}>
       <Box
-        bg={unassigned ? 'gray.600' : 'teal.500'}
+        bg={unassigned ? 'gray.500' : 'teal.500'}
         color="white"
         borderRadius="full"
         width={size}

@@ -8,9 +8,13 @@ import { IMember } from '../../../redux/members/membersTypes';
 
 interface AssigneeSelectionProps {
   onItemClick: (item: IMember | null) => void;
+  tiny?: boolean;
 }
 
-const AssigneeSelectionList = ({ onItemClick }: AssigneeSelectionProps) => {
+const AssigneeSelectionList = ({
+  onItemClick,
+  tiny,
+}: AssigneeSelectionProps) => {
   const memberIds = useAppSelector(selectFilteredMemberIds);
 
   const renderAssigneeItem = (id: string, index: number) => {
@@ -25,9 +29,9 @@ const AssigneeSelectionList = ({ onItemClick }: AssigneeSelectionProps) => {
 
   return (
     <VStack
-      position="absolute"
-      borderWidth={1}
-      boxShadow="md"
+      position={tiny ? 'relative' : 'absolute'}
+      borderWidth={tiny ? 0 : 1}
+      boxShadow={tiny ? 'none' : 'md'}
       w="350px"
       bg="white"
       top="100%"

@@ -195,6 +195,35 @@ export const moveTaskToColumn = createAsyncThunk(
   },
 );
 
+export const setTaskAssignee = createAsyncThunk(
+  actions.setTaskAssignee,
+  async (
+    {
+      taskId,
+      newAssigneeId,
+      dataField,
+    }: {
+      taskId: string;
+      newAssigneeId: string | null;
+      dataField: TaskStatusDataFields;
+    },
+    { rejectWithValue, getState },
+  ) => {
+    try {
+      const state = getState() as RootState;
+      const projectId = state.projects.selectedProjectId;
+      const taskRef = doc(db, `projects/${projectId}/tasks/${taskId}`);
+
+      await updateDoc(taskRef, { assignedTo: newAssigneeId });
+
+      return { taskId, newAssigneeId, dataField };
+    } catch (error) {
+      console.error('Error setting task assignee:', error);
+      return rejectWithValue('Failed to set task assignee');
+    }
+  },
+);
+
 const initialState: ITasksState = {
   tasks: [],
   backlogTaskIds: [],
@@ -260,6 +289,12 @@ const tasksSlice = createSlice({
       state[action.payload.dataField][action.payload.taskId] = {
         ...state[action.payload.dataField][action.payload.taskId],
         columnId: action.payload.newColumnId,
+      };
+    });
+    builder.addCase(setTaskAssignee.fulfilled, (state, action) => {
+      state[action.payload.dataField][action.payload.taskId] = {
+        ...state[action.payload.dataField][action.payload.taskId],
+        assignedTo: action.payload.newAssigneeId,
       };
     });
   },

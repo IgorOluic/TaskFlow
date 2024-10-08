@@ -1,5 +1,4 @@
 import { HStack, Text } from '@chakra-ui/react';
-import UserAvatar from '../UserAvatar';
 import ColumnDropdown from '../ColumnDropdown';
 import { TaskStatusDataFields } from '../../../redux/tasks/tasksTypes';
 import { useAppSelector } from '../../../hooks/useAppSelector';
@@ -7,6 +6,7 @@ import { selectTaskByIdAndField } from '../../../redux/tasks/tasksSelectors';
 import TaskListItemMenu from './TaskListItemMenu';
 import { useAppDispatch } from '../../../hooks/useAppDispatch';
 import { moveTaskToColumn } from '../../../redux/tasks/tasksSlice';
+import TinyAssigneeSelection from '../AssigneeSelection/TinyAssigneeSelection';
 
 interface TaskListItemProps {
   isLastItem: boolean;
@@ -52,7 +52,12 @@ const TaskListItem = ({ taskId, isLastItem, dataField }: TaskListItemProps) => {
           onChange={onColumnChange}
         />
 
-        <UserAvatar firstName="Igor" lastName="Oluic" />
+        <TinyAssigneeSelection
+          unassigned={!task.assignedTo}
+          assigneeId={task.assignedTo}
+          taskId={task.id}
+          dataField={dataField}
+        />
 
         <TaskListItemMenu taskId={task.id} status={task.status} />
       </HStack>
