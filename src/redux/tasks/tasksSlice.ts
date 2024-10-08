@@ -14,6 +14,7 @@ import {
   BoardTasksData,
   ITasksState,
   TaskStatus,
+  TaskStatusDataFields,
 } from './tasksTypes';
 import { groupFirestoreDocsById } from '../../utils/dataUtils';
 import { TASK_STATUS_FIELDS } from '../../constants/tasks';
@@ -165,6 +166,35 @@ export const fetchBoardTasks = createAsyncThunk(
   },
 );
 
+export const moveTaskToColumn = createAsyncThunk(
+  actions.moveTaskToColumn,
+  async (
+    {
+      taskId,
+      newColumnId,
+      dataField,
+    }: { taskId: string; newColumnId: string; dataField: TaskStatusDataFields },
+    { rejectWithValue, getState },
+  ) => {
+    try {
+      const state = getState() as RootState;
+      const projectId = state.projects.selectedProjectId;
+      const taskRef = doc(db, `projects/${projectId}/tasks/${taskId}`);
+
+      await updateDoc(taskRef, {
+        columnId: newColumnId,
+      });
+
+      console.log('done');
+
+      return { taskId, newColumnId, dataField };
+    } catch (error) {
+      console.error('Error moving task to new column:', error);
+      return rejectWithValue('Failed to move task to new column');
+    }
+  },
+);
+
 const initialState: ITasksState = {
   tasks: [],
   backlogTaskIds: [],
@@ -225,6 +255,12 @@ const tasksSlice = createSlice({
     builder.addCase(fetchBoardTasks.fulfilled, (state, action) => {
       state.boardTaskIds = action.payload.ids;
       state.boardTasksData = action.payload.data as BoardTasksData;
+    });
+    builder.addCase(moveTaskToColumn.fulfilled, (state, action) => {
+      state[action.payload.dataField][action.payload.taskId] = {
+        ...state[action.payload.dataField][action.payload.taskId],
+        columnId: action.payload.newColumnId,
+      };
     });
   },
 });

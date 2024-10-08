@@ -5,6 +5,8 @@ import { TaskStatusDataFields } from '../../../redux/tasks/tasksTypes';
 import { useAppSelector } from '../../../hooks/useAppSelector';
 import { selectTaskByIdAndField } from '../../../redux/tasks/tasksSelectors';
 import TaskListItemMenu from './TaskListItemMenu';
+import { useAppDispatch } from '../../../hooks/useAppDispatch';
+import { moveTaskToColumn } from '../../../redux/tasks/tasksSlice';
 
 interface TaskListItemProps {
   isLastItem: boolean;
@@ -13,7 +15,12 @@ interface TaskListItemProps {
 }
 
 const TaskListItem = ({ taskId, isLastItem, dataField }: TaskListItemProps) => {
+  const dispatch = useAppDispatch();
   const task = useAppSelector(selectTaskByIdAndField(dataField, taskId));
+
+  const onColumnChange = (newColumnId: string) => {
+    dispatch(moveTaskToColumn({ taskId, newColumnId, dataField }));
+  };
 
   return (
     <HStack
@@ -39,7 +46,11 @@ const TaskListItem = ({ taskId, isLastItem, dataField }: TaskListItemProps) => {
       </HStack>
 
       <HStack justifySelf="flex-end" spacing={2}>
-        <ColumnDropdown small onChange={() => {}} />
+        <ColumnDropdown
+          initialColumn={task.columnId}
+          small
+          onChange={onColumnChange}
+        />
 
         <UserAvatar firstName="Igor" lastName="Oluic" />
 

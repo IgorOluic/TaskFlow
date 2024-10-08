@@ -18,6 +18,7 @@ export default {
   changeTaskStatus: 'tasks/changeTaskStatus',
   fetchBacklogTasks: 'tasks/fetchBacklogTasks',
   fetchBoardTasks: 'tasks/fetchBoardTasks',
+  moveTaskToColumn: 'tasks/moveTaskToColumn',
 
   // invitations
   fetchInvitations: 'invitations/fetchInvitations',

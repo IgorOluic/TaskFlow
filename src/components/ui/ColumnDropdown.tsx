@@ -14,12 +14,21 @@ import { IColumn } from '../../redux/columns/columnsTypes';
 interface ColumnSelectProps {
   onChange: (id: string) => void;
   small?: boolean;
+  initialColumn?: string;
 }
 
-const ColumnDropdown = ({ onChange, small }: ColumnSelectProps) => {
+const ColumnDropdown = ({
+  onChange,
+  small,
+  initialColumn,
+}: ColumnSelectProps) => {
   const columns = useAppSelector(selectColumnsArray);
 
-  const [selectedColumn, setSelectedColumn] = useState(columns[0]);
+  const [selectedColumn, setSelectedColumn] = useState(
+    initialColumn
+      ? columns.find((item) => item.id === initialColumn) || columns[0]
+      : columns[0],
+  );
 
   const filteredColumns = useMemo(() => {
     return columns.filter((column) => column.id !== selectedColumn.id);
