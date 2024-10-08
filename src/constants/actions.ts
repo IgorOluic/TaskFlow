@@ -23,4 +23,7 @@ export default {
   fetchInvitations: 'invitations/fetchInvitations',
   acceptInvitation: 'invitations/acceptInvitation',
   denyInvitation: 'invitations/denyInvitation',
+
+  // members
+  fetchProjectMembers: 'members/fetchProjectMembers',
 };

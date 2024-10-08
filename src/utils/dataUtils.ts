@@ -1,4 +1,4 @@
-import { QueryDocumentSnapshot } from 'firebase/firestore';
+import { QueryDocumentSnapshot, Timestamp } from 'firebase/firestore';
 
 interface ProcessedFirestoreData<T> {
   ids: string[];
@@ -27,4 +27,12 @@ export const groupFirestoreDocsById = <T>(
   });
 
   return { ids, data };
+};
+
+export const timestampToISOString = (timestamp: Timestamp) => {
+  if (timestamp?.toDate) {
+    return timestamp.toDate().toISOString();
+  }
+
+  return null;
 };

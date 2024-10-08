@@ -28,11 +28,13 @@ export const createTask = createAsyncThunk(
       columnId,
       summary,
       description,
+      assignee,
     }: {
       projectId: string;
       columnId?: string | null;
       summary: string;
       description: string;
+      assignee: string | null;
     },
     { rejectWithValue, getState },
   ) => {
@@ -70,7 +72,7 @@ export const createTask = createAsyncThunk(
           columnId: columnId || null,
           createdAt: new Date().toISOString(),
           status: TaskStatus.backlog,
-          assignedTo: null,
+          assignedTo: assignee,
         };
 
         transaction.set(tasksRef, newTask);

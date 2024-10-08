@@ -1,4 +1,4 @@
-import { ChangeEvent, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -19,12 +19,24 @@ import { createTask } from '../../redux/tasks/tasksSlice';
 import ColumnDropdown from '../ui/ColumnDropdown';
 import RichTextEditor from '../ui/RichTextEditor';
 import { selectSelectedProjectId } from '../../redux/projects/projectsSelectors';
+import AssigneeSelection from '../ui/AssigneeSelection';
+import { fetchProjectMembers } from '../../redux/members/membersSlice';
 
 const NewTaskModal = () => {
   const dispatch = useAppDispatch();
   const selectedProjectId = useAppSelector(selectSelectedProjectId);
 
-  const newData = useRef({ summary: '', columnId: '', description: '' });
+  const newData = useRef<{
+    summary: string;
+    columnId: string;
+    description: string;
+    assignee: string | null;
+  }>({
+    summary: '',
+    columnId: '',
+    description: '',
+    assignee: null,
+  });
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -59,6 +71,17 @@ const NewTaskModal = () => {
     newData.current = { ...newData.current, description: content };
   };
 
+  const onAssigneeChange = (value: string | null) => {
+    newData.current = { ...newData.current, assignee: value };
+  };
+
+  useEffect(() => {
+    if (selectedProjectId && isOpen) {
+      console.log('called');
+      dispatch(fetchProjectMembers(selectedProjectId));
+    }
+  }, [isOpen]);
+
   return (
     <>
       <Button onClick={onOpen}>Add Task</Button>
@@ -70,7 +93,7 @@ const NewTaskModal = () => {
             <ModalHeader>Create New Task</ModalHeader>
             <ModalCloseButton />
             <ModalBody overflowY="scroll">
-              <VStack w="full" alignItems="flex-start" spacing={6}>
+              <VStack w="full" alignItems="flex-start" spacing={6} pb={20}>
                 <ColumnDropdown onChange={onColumnChange} />
 
                 <FormControl>
@@ -83,6 +106,11 @@ const NewTaskModal = () => {
                 </FormControl>
 
                 <RichTextEditor onChange={onDescriptionChange} />
+
+                <AssigneeSelection
+                  withLabel
+                  onAssigneeChange={onAssigneeChange}
+                />
               </VStack>
             </ModalBody>
 
