@@ -1,9 +1,11 @@
 import { VStack } from '@chakra-ui/react';
-import TaskBoard from '../ui/TaskBoard';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { useEffect } from 'react';
 import { useAppSelector } from '../../hooks/useAppSelector';
 import { fetchProjectColumns } from '../../redux/columns/columnsSlice';
+import TaskBoard from '../ui/TaskBoard';
+import Breadcrumbs from '../layout/Breadcrumbs';
+import TaskFilters from '../ui/TaskFilters';
 
 const BoardPage = () => {
   const selectedProjectId = useAppSelector(
@@ -18,7 +20,11 @@ const BoardPage = () => {
   }, [selectedProjectId]);
 
   return (
-    <VStack w="full">
+    <VStack w="full" alignItems="flex-start" p={5}>
+      <Breadcrumbs />
+
+      <TaskFilters />
+
       <TaskBoard />
     </VStack>
   );

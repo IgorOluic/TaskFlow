@@ -185,8 +185,6 @@ export const moveTaskToColumn = createAsyncThunk(
         columnId: newColumnId,
       });
 
-      console.log('done');
-
       return { taskId, newColumnId, dataField };
     } catch (error) {
       console.error('Error moving task to new column:', error);

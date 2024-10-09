@@ -69,3 +69,12 @@ export const selectBoardTaskById = (taskId: string) =>
     [selectBoardTasksData],
     (boardTasksData) => boardTasksData[taskId],
   );
+
+export const selectBoardTasksByColumnId = (columnId: string) =>
+  createSelector(
+    [selectBoardTaskIds, selectBoardTasksData],
+    (boardTaskIds, boardTasksData) =>
+      boardTaskIds.filter(
+        (taskId) => boardTasksData[taskId]?.columnId === columnId,
+      ),
+  );

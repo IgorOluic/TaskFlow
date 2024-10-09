@@ -28,7 +28,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
     `${(firstName || '')[0]}${(lastName || '')[0]}`.toUpperCase();
 
   return (
-    <HStack onClick={handleClick}>
+    <HStack onClick={handleClick} cursor={onClick && 'pointer'}>
       <Box
         bg={unassigned ? 'gray.500' : 'teal.500'}
         color="white"

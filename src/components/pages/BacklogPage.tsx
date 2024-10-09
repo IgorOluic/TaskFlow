@@ -30,13 +30,7 @@ const BacklogPage = () => {
   }, [selectedProjectId]);
 
   return (
-    <VStack
-      w="full"
-      alignItems="flex-start"
-      px={5}
-      py={5}
-      justifyContent="center"
-    >
+    <VStack w="full" alignItems="flex-start" p={5}>
       <Breadcrumbs />
 
       <TaskFilters />
