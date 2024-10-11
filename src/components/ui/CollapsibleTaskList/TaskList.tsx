@@ -1,32 +1,24 @@
 import { VStack } from '@chakra-ui/react';
-import {
-  TaskStatusDataFields,
-  TaskStatusIdsFields,
-} from '../../../redux/tasks/tasksTypes';
+import { TaskStatus } from '../../../redux/tasks/tasksTypes';
 import { useAppSelector } from '../../../hooks/useAppSelector';
 import { selectFilteredTaskIdsByField } from '../../../redux/tasks/tasksSelectors';
-import { Droppable } from 'react-beautiful-dnd';
-import DraggableTaskListItem from './DraggableTaskListItem';
+import { Droppable } from '@hello-pangea/dnd';
+import TaskListItem from './TaskListItem';
+import { TASK_STATUS_FIELDS } from '../../../constants/tasks';
 
 interface TaskListProps {
-  idsField: TaskStatusIdsFields;
-  dataField: TaskStatusDataFields;
+  status: TaskStatus;
 }
 
-const TaskList = ({ idsField, dataField }: TaskListProps) => {
+const TaskList = ({ status }: TaskListProps) => {
+  const taskStatusFields = TASK_STATUS_FIELDS[status];
+
   const taskIds = useAppSelector(
-    selectFilteredTaskIdsByField(idsField, dataField),
+    selectFilteredTaskIdsByField(taskStatusFields.ids, taskStatusFields.data),
   );
 
   return (
-    <Droppable
-      // TODO: Find a better way to do this
-      droppableId={
-        dataField === 'backlogTasksData'
-          ? 'droppable-backlog'
-          : 'droppable-board'
-      }
-    >
+    <Droppable droppableId={`droppable-${status}`}>
       {(provided) => (
         <VStack
           {...provided.droppableProps}
@@ -34,14 +26,12 @@ const TaskList = ({ idsField, dataField }: TaskListProps) => {
           w="full"
           spacing={0}
           cursor="pointer"
-          transition="all .3s"
-          _hover={{ transition: 'all .3s' }}
         >
           {taskIds.map((task, index) => (
-            <DraggableTaskListItem
+            <TaskListItem
               key={task}
               taskId={task}
-              dataField={dataField}
+              dataField={taskStatusFields.data}
               index={index}
             />
           ))}

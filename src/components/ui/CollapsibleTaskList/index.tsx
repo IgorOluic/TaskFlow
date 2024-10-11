@@ -1,24 +1,16 @@
 import { HStack, Text, VStack } from '@chakra-ui/react';
 import SvgIcon from '../SvgIcon';
-import { useState } from 'react';
-import {
-  TaskStatusDataFields,
-  TaskStatusIdsFields,
-} from '../../../redux/tasks/tasksTypes';
+import { TaskStatus } from '../../../redux/tasks/tasksTypes';
 import TaskList from './TaskList';
+import useVisibilityControl from '../../../hooks/useVisibilityControl';
 
 interface CollapsibleTaskListProps {
   title: string;
-  idsField: TaskStatusIdsFields;
-  dataField: TaskStatusDataFields;
+  status: TaskStatus;
 }
 
-const CollapsibleTaskList = ({
-  title,
-  idsField,
-  dataField,
-}: CollapsibleTaskListProps) => {
-  const [collapsed, setCollapsed] = useState(false);
+const CollapsibleTaskList = ({ title, status }: CollapsibleTaskListProps) => {
+  const { isOpen, onToggle } = useVisibilityControl(true);
 
   return (
     <VStack
@@ -30,13 +22,7 @@ const CollapsibleTaskList = ({
       py={2}
       className="no-select"
     >
-      <HStack
-        w="full"
-        onClick={() => setCollapsed(!collapsed)}
-        cursor="pointer"
-        py={2}
-        px={2}
-      >
+      <HStack w="full" onClick={onToggle} cursor="pointer" py={2} px={2}>
         <SvgIcon name="chevronDown" width="12px" height="12px" />
         <Text fontSize={14} fontWeight={600}>
           {title}{' '}
@@ -46,7 +32,7 @@ const CollapsibleTaskList = ({
         </Text>
       </HStack>
 
-      {!collapsed && <TaskList idsField={idsField} dataField={dataField} />}
+      {isOpen && <TaskList status={status} />}
     </VStack>
   );
 };

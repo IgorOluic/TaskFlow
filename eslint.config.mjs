@@ -21,6 +21,7 @@ export default [
     },
     rules: {
       'react/react-in-jsx-scope': 'off',
+      'react/display-name': 'off',
       'no-empty-pattern': 'warn',
       '@typescript-eslint/no-empty-interface': 'warn',
       '@typescript-eslint/no-unused-vars': 'warn',

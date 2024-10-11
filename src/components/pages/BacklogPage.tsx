@@ -9,16 +9,10 @@ import {
   updateTaskStatusAndPosition,
 } from '../../redux/tasks/tasksSlice';
 import CollapsibleTaskList from '../ui/CollapsibleTaskList';
-import {
-  BACKLOG_TASKS_DATA,
-  BACKLOG_TASK_IDS,
-  BOARD_TASKS_DATA,
-  BOARD_TASK_IDS,
-} from '../../constants/tasks';
 import Breadcrumbs from '../layout/Breadcrumbs';
 import TaskFilters from '../ui/TaskFilters';
-import { DragDropContext, DropResult } from 'react-beautiful-dnd';
 import { TaskStatus } from '../../redux/tasks/tasksTypes';
+import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 
 const BacklogPage = () => {
   const dispatch = useAppDispatch();
@@ -80,19 +74,11 @@ const BacklogPage = () => {
       <TaskFilters />
 
       <DragDropContext onDragEnd={onDragEnd}>
-        <CollapsibleTaskList
-          title="Board"
-          idsField={BOARD_TASK_IDS}
-          dataField={BOARD_TASKS_DATA}
-        />
+        <CollapsibleTaskList title="Board" status={TaskStatus.board} />
 
         <Divider my={10} />
 
-        <CollapsibleTaskList
-          title="Backlog"
-          idsField={BACKLOG_TASK_IDS}
-          dataField={BACKLOG_TASKS_DATA}
-        />
+        <CollapsibleTaskList title="Backlog" status={TaskStatus.backlog} />
       </DragDropContext>
     </VStack>
   );
