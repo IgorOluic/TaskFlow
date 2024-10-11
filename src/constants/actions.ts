@@ -20,6 +20,7 @@ export default {
   fetchBoardTasks: 'tasks/fetchBoardTasks',
   moveTaskToColumn: 'tasks/moveTaskToColumn',
   setTaskAssignee: 'tasks/setTaskAssignee',
+  updateTaskPosition: 'tasks/updateTaskPosition',
 
   // invitations
   fetchInvitations: 'invitations/fetchInvitations',

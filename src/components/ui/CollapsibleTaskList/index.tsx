@@ -7,13 +7,17 @@ import {
 } from '../../../redux/tasks/tasksTypes';
 import TaskList from './TaskList';
 
-interface TaskListProps {
+interface CollapsibleTaskListProps {
   title: string;
   idsField: TaskStatusIdsFields;
   dataField: TaskStatusDataFields;
 }
 
-const CollapsibleTaskList = ({ title, idsField, dataField }: TaskListProps) => {
+const CollapsibleTaskList = ({
+  title,
+  idsField,
+  dataField,
+}: CollapsibleTaskListProps) => {
   const [collapsed, setCollapsed] = useState(false);
 
   return (

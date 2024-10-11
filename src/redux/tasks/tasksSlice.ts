@@ -7,6 +7,7 @@ import {
   getDocs,
   runTransaction,
   updateDoc,
+  getDoc,
 } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
 import {
@@ -21,6 +22,7 @@ import { TASK_STATUS_FIELDS } from '../../constants/tasks';
 import actions from '../../constants/actions';
 import { RootState } from '../store';
 
+// TODO: Choosing where to create a task: backlog/board
 export const createTask = createAsyncThunk(
   actions.createTask,
   async (
@@ -48,10 +50,12 @@ export const createTask = createAsyncThunk(
       }
 
       const projectRef = doc(db, `projects/${projectId}`);
+      const taskOrderRef = doc(db, `projects/${projectId}/taskOrders/backlog`);
       let taskId;
 
       await runTransaction(db, async (transaction) => {
         const projectDoc = await transaction.get(projectRef);
+        const taskOrderDoc = await transaction.get(taskOrderRef);
 
         if (!projectDoc.exists()) {
           throw new Error('Project does not exist');
@@ -65,7 +69,6 @@ export const createTask = createAsyncThunk(
         transaction.update(projectRef, { taskCounter: taskCounter + 1 });
 
         const tasksRef = doc(db, `projects/${projectId}/tasks/${taskId}`);
-
         const newTask = {
           summary,
           description,
@@ -77,6 +80,16 @@ export const createTask = createAsyncThunk(
         };
 
         transaction.set(tasksRef, newTask);
+
+        if (taskOrderDoc.exists()) {
+          const taskOrderData = taskOrderDoc.data().taskOrder || [];
+
+          const newTaskOrder = [taskId, ...taskOrderData];
+
+          transaction.update(taskOrderRef, { taskOrder: newTaskOrder });
+        } else {
+          transaction.set(taskOrderRef, { taskOrder: [taskId] });
+        }
       });
 
       return {
@@ -136,9 +149,17 @@ export const fetchBacklogTasks = createAsyncThunk(
 
       const querySnapshot = await getDocs(q);
 
-      const { ids, data } = groupFirestoreDocsById(querySnapshot.docs);
+      const { data } = groupFirestoreDocsById(querySnapshot.docs);
 
-      return { ids, data };
+      const taskOrderRef = doc(db, `projects/${projectId}/taskOrders/backlog`);
+      const taskOrderSnapshot = await getDoc(taskOrderRef);
+
+      let taskOrder = [];
+      if (taskOrderSnapshot.exists()) {
+        taskOrder = taskOrderSnapshot.data().taskOrder || [];
+      }
+
+      return { ids: taskOrder, data };
     } catch (error) {
       console.error('Error fetching backlog tasks:', error);
       return rejectWithValue('Failed to fetch backlog tasks');
@@ -152,13 +173,21 @@ export const fetchBoardTasks = createAsyncThunk(
     try {
       const tasksRef = collection(db, `projects/${projectId}/tasks`);
 
-      const q = query(tasksRef, where('status', '==', TaskStatus.active));
+      const q = query(tasksRef, where('status', '==', TaskStatus.board));
 
       const querySnapshot = await getDocs(q);
 
-      const { ids, data } = groupFirestoreDocsById(querySnapshot.docs);
+      const { data } = groupFirestoreDocsById(querySnapshot.docs);
 
-      return { ids, data };
+      const taskOrderRef = doc(db, `projects/${projectId}/taskOrders/board`);
+      const taskOrderSnapshot = await getDoc(taskOrderRef);
+
+      let taskOrder = [];
+      if (taskOrderSnapshot.exists()) {
+        taskOrder = taskOrderSnapshot.data().taskOrder || [];
+      }
+
+      return { ids: taskOrder, data };
     } catch (error) {
       console.error('Error fetching backlog tasks:', error);
       return rejectWithValue('Failed to fetch backlog tasks');
@@ -222,6 +251,71 @@ export const setTaskAssignee = createAsyncThunk(
   },
 );
 
+export const updateTaskPosition = createAsyncThunk(
+  actions.updateTaskPosition,
+  async (
+    {
+      taskId,
+      newIndex,
+      taskStatus,
+    }: {
+      taskId: string;
+      newIndex: number;
+      taskStatus: TaskStatus;
+    },
+    { rejectWithValue, getState, dispatch },
+  ) => {
+    try {
+      const taskOrdersId =
+        taskStatus === TaskStatus.backlog ? 'backlog' : 'board';
+
+      dispatch(
+        updateTaskOrderLocally({
+          taskId,
+          newIndex,
+          taskStatus,
+        }),
+      );
+
+      const state = getState() as RootState;
+      const projectId = state.projects.selectedProjectId;
+
+      if (!projectId) {
+        throw new Error('Project ID not found.');
+      }
+
+      const taskOrderRef = doc(
+        db,
+        `projects/${projectId}/taskOrders/${taskOrdersId}`,
+      );
+
+      await runTransaction(db, async (transaction) => {
+        const taskOrderDoc = await transaction.get(taskOrderRef);
+
+        if (!taskOrderDoc.exists()) {
+          throw new Error('Task order document does not exist');
+        }
+
+        const taskOrder = taskOrderDoc.data().taskOrder as string[];
+
+        const currentIndex = taskOrder.indexOf(taskId);
+
+        if (currentIndex === -1) {
+          throw new Error('Task ID not found in task order');
+        }
+
+        taskOrder.splice(currentIndex, 1);
+        taskOrder.splice(newIndex, 0, taskId);
+
+        transaction.update(taskOrderRef, { taskOrder });
+      });
+    } catch (error) {
+      console.error('Error updating task position:', error);
+      return rejectWithValue('Failed to update task position');
+    }
+  },
+);
+
 const initialState: ITasksState = {
   tasks: [],
   backlogTaskIds: [],
@@ -273,6 +367,26 @@ const tasksSlice = createSlice({
         [taskId]: { ...removedItem, status: newStatus },
       };
     },
+    updateTaskOrderLocally: (
+      state,
+      action: PayloadAction<{
+        taskId: string;
+        newIndex: number;
+        taskStatus: TaskStatus;
+      }>,
+    ) => {
+      const { taskId, newIndex, taskStatus } = action.payload;
+
+      const idsField = TASK_STATUS_FIELDS[taskStatus].ids;
+
+      const currentIndex = state[idsField].indexOf(taskId);
+
+      if (currentIndex !== -1) {
+        state[idsField].splice(currentIndex, 1);
+
+        state[idsField].splice(newIndex, 0, taskId);
+      }
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchBacklogTasks.fulfilled, (state, action) => {
@@ -298,6 +412,7 @@ const tasksSlice = createSlice({
   },
 });
 
-export const { setNewTaskStatus, setSearchTerm } = tasksSlice.actions;
+export const { setNewTaskStatus, setSearchTerm, updateTaskOrderLocally } =
+  tasksSlice.actions;
 
 export default tasksSlice.reducer;

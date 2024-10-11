@@ -19,7 +19,7 @@ const TaskListItemMenu = ({ taskId, status }: TaskMenuProps) => {
   const ref = useRef(null);
 
   const selectedProject = useAppSelector(selectSelectedProject);
-  const isInBoard = status === TaskStatus.active;
+  const isInBoard = status === TaskStatus.board;
 
   useOutsideClick({ ref, handler: onClose });
 
@@ -28,7 +28,7 @@ const TaskListItemMenu = ({ taskId, status }: TaskMenuProps) => {
       changeTaskStatus({
         taskId,
         projectId: selectedProject?.id as string,
-        newStatus: isInBoard ? TaskStatus.backlog : TaskStatus.active,
+        newStatus: isInBoard ? TaskStatus.backlog : TaskStatus.board,
         oldStatus: status,
       }),
     );

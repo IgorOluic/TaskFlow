@@ -5,7 +5,8 @@ import {
 } from '../../../redux/tasks/tasksTypes';
 import { useAppSelector } from '../../../hooks/useAppSelector';
 import { selectFilteredTaskIdsByField } from '../../../redux/tasks/tasksSelectors';
-import TaskListItem from './TaskListItem';
+import { Droppable } from 'react-beautiful-dnd';
+import DraggableTaskListItem from './DraggableTaskListItem';
 
 interface TaskListProps {
   idsField: TaskStatusIdsFields;
@@ -17,29 +18,37 @@ const TaskList = ({ idsField, dataField }: TaskListProps) => {
     selectFilteredTaskIdsByField(idsField, dataField),
   );
 
-  const renderTaskItem = (id: string, index: number): JSX.Element => {
-    const isLastItem = taskIds.length - 1 === index;
-    return (
-      <TaskListItem
-        key={index}
-        taskId={id}
-        dataField={dataField}
-        isLastItem={isLastItem}
-      />
-    );
-  };
-
   return (
-    <VStack
-      w="full"
-      alignItems="flex-start"
-      backgroundColor="white"
-      borderWidth={1}
-      borderColor="gray.300"
-      spacing={0}
+    <Droppable
+      // TODO: Find a better way to do this
+      droppableId={
+        dataField === 'backlogTasksData'
+          ? 'droppable-backlog'
+          : 'droppable-board'
+      }
     >
-      {taskIds.map(renderTaskItem)}
-    </VStack>
+      {(provided) => (
+        <VStack
+          {...provided.droppableProps}
+          ref={provided.innerRef}
+          w="full"
+          spacing={0}
+          cursor="pointer"
+          transition="all .3s"
+          _hover={{ transition: 'all .3s' }}
+        >
+          {taskIds.map((task, index) => (
+            <DraggableTaskListItem
+              key={task}
+              taskId={task}
+              dataField={dataField}
+              index={index}
+            />
+          ))}
+          {provided.placeholder}
+        </VStack>
+      )}
+    </Droppable>
   );
 };
 

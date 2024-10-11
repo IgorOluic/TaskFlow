@@ -6,7 +6,7 @@ import {
 } from '../../constants/tasks';
 
 export enum TaskStatus {
-  active = 'ACTIVE',
+  board = 'BOARD',
   backlog = 'BACKLOG',
 }
 

@@ -17,7 +17,7 @@ const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement,
 );
 root.render(
-  <React.StrictMode>
+  <React.Fragment>
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <ChakraProvider theme={theme}>
@@ -25,7 +25,7 @@ root.render(
         </ChakraProvider>
       </PersistGate>
     </Provider>
-  </React.StrictMode>,
+  </React.Fragment>,
 );
 
 // If you want to start measuring performance in your app, pass a function

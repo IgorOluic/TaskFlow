@@ -9,7 +9,7 @@ export const BOARD_TASKS_DATA = 'boardTasksData';
 export const BACKLOG_TASKS_DATA = 'backlogTasksData';
 
 export const TASK_STATUS_FIELDS: TaskStatusFields = {
-  [TaskStatus.active]: {
+  [TaskStatus.board]: {
     ids: 'boardTaskIds',
     data: 'boardTasksData',
   },
