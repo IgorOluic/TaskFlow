@@ -6,8 +6,8 @@ import {
 } from '../../constants/tasks';
 
 export enum TaskStatus {
-  board = 'BOARD',
-  backlog = 'BACKLOG',
+  board = 'board',
+  backlog = 'backlog',
 }
 
 export type TaskStatusIdsFields =

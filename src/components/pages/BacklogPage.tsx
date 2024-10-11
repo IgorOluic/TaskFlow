@@ -6,6 +6,7 @@ import {
   fetchBacklogTasks,
   fetchBoardTasks,
   updateTaskPosition,
+  updateTaskStatusAndPosition,
 } from '../../redux/tasks/tasksSlice';
 import CollapsibleTaskList from '../ui/CollapsibleTaskList';
 import {
@@ -48,7 +49,19 @@ const BacklogPage = () => {
         : TaskStatus.board;
 
     if (!isSameList) {
-      // TODO: Handle item dropping to a different list
+      const oldStatus =
+        source.droppableId === 'droppable-backlog'
+          ? TaskStatus.backlog
+          : TaskStatus.board;
+
+      dispatch(
+        updateTaskStatusAndPosition({
+          taskId: draggableId,
+          newIndex: destination.index,
+          newStatus: taskStatus,
+          oldStatus,
+        }),
+      );
     } else {
       dispatch(
         updateTaskPosition({

@@ -1,10 +1,8 @@
 import { Center, Flex, Text, VStack, useOutsideClick } from '@chakra-ui/react';
-import { useAppSelector } from '../../../hooks/useAppSelector';
 import { useRef } from 'react';
 import { useAppDispatch } from '../../../hooks/useAppDispatch';
 import { TaskStatus } from '../../../redux/tasks/tasksTypes';
-import { selectSelectedProject } from '../../../redux/projects/projectsSelectors';
-import { changeTaskStatus } from '../../../redux/tasks/tasksSlice';
+import { updateTaskStatusAndPosition } from '../../../redux/tasks/tasksSlice';
 import SvgIcon from '../SvgIcon';
 import useVisibilityControl from '../../../hooks/useVisibilityControl';
 
@@ -18,18 +16,17 @@ const TaskListItemMenu = ({ taskId, status }: TaskMenuProps) => {
   const { isOpen, onClose, onToggle } = useVisibilityControl();
   const ref = useRef(null);
 
-  const selectedProject = useAppSelector(selectSelectedProject);
   const isInBoard = status === TaskStatus.board;
 
   useOutsideClick({ ref, handler: onClose });
 
   const onMoveToClick = () => {
     dispatch(
-      changeTaskStatus({
+      updateTaskStatusAndPosition({
         taskId,
-        projectId: selectedProject?.id as string,
         newStatus: isInBoard ? TaskStatus.backlog : TaskStatus.board,
         oldStatus: status,
+        newIndex: 0,
       }),
     );
   };

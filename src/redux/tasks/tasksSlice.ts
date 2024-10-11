@@ -105,36 +105,88 @@ export const createTask = createAsyncThunk(
   },
 );
 
-export const changeTaskStatus = createAsyncThunk(
-  actions.changeTaskStatus,
+export const updateTaskStatusAndPosition = createAsyncThunk(
+  actions.updateTaskStatusAndPosition,
   async (
     {
-      projectId,
       taskId,
       newStatus,
       oldStatus,
+      newIndex,
     }: {
-      projectId: string;
       taskId: string;
       newStatus: TaskStatus;
       oldStatus: TaskStatus;
+      newIndex: number;
     },
-    { rejectWithValue, dispatch },
+    { rejectWithValue, dispatch, getState },
   ) => {
     try {
-      dispatch(setNewTaskStatus({ taskId, newStatus, oldStatus }));
+      const state = getState() as RootState;
+      const projectId = state.projects.selectedProjectId;
+
+      if (!projectId) {
+        throw new Error('Project ID not found.');
+      }
+
+      const taskOrderRefOld = doc(
+        db,
+        `projects/${projectId}/taskOrders/${oldStatus}`,
+      );
+      const taskOrderRefNew = doc(
+        db,
+        `projects/${projectId}/taskOrders/${newStatus}`,
+      );
 
       const taskRef = doc(db, `projects/${projectId}/tasks/${taskId}`);
 
-      await updateDoc(taskRef, {
-        status: newStatus,
-        updatedAt: new Date().toISOString(),
-      });
+      dispatch(
+        updateTaskStatusAndPositionLocally({
+          taskId,
+          newStatus,
+          oldStatus,
+          newIndex,
+        }),
+      );
 
-      return { taskId, newStatus };
+      await runTransaction(db, async (transaction) => {
+        const oldOrderDoc = await transaction.get(taskOrderRefOld);
+        const newOrderDoc = await transaction.get(taskOrderRefNew);
+
+        const oldOrder = oldOrderDoc.exists()
+          ? (oldOrderDoc.data().taskOrder as string[])
+          : [];
+
+        const newOrder = newOrderDoc.exists()
+          ? (newOrderDoc.data().taskOrder as string[])
+          : [];
+
+        const oldIndex = oldOrder.indexOf(taskId);
+        if (oldIndex > -1) {
+          oldOrder.splice(oldIndex, 1);
+        }
+
+        newOrder.splice(newIndex, 0, taskId);
+
+        transaction.update(taskRef, {
+          status: newStatus,
+          updatedAt: new Date().toISOString(),
+        });
+
+        transaction.set(
+          taskOrderRefOld,
+          { taskOrder: oldOrder },
+          { merge: true },
+        );
+        transaction.set(
+          taskOrderRefNew,
+          { taskOrder: newOrder },
+          { merge: true },
+        );
+      });
     } catch (error) {
-      console.error('Error updating task status:', error);
-      return rejectWithValue('Failed to update task status');
+      console.error('Error updating task status and position:', error);
+      return rejectWithValue('Failed to update task status and position');
     }
   },
 );
@@ -266,11 +318,8 @@ export const updateTaskPosition = createAsyncThunk(
     { rejectWithValue, getState, dispatch },
   ) => {
     try {
-      const taskOrdersId =
-        taskStatus === TaskStatus.backlog ? 'backlog' : 'board';
-
       dispatch(
-        updateTaskOrderLocally({
+        updateTaskPositionLocally({
           taskId,
           newIndex,
           taskStatus,
@@ -286,7 +335,7 @@ export const updateTaskPosition = createAsyncThunk(
 
       const taskOrderRef = doc(
         db,
-        `projects/${projectId}/taskOrders/${taskOrdersId}`,
+        `projects/${projectId}/taskOrders/${taskStatus}`,
       );
 
       await runTransaction(db, async (transaction) => {
@@ -332,42 +381,46 @@ const tasksSlice = createSlice({
     setSearchTerm: (state, action: PayloadAction<{ search: string }>) => {
       state.search = action.payload.search;
     },
-    setNewTaskStatus: (
+    updateTaskStatusAndPositionLocally: (
       state,
       action: PayloadAction<{
         taskId: string;
         newStatus: TaskStatus;
         oldStatus: TaskStatus;
+        newIndex: number;
       }>,
     ) => {
-      const { taskId, newStatus, oldStatus } = action.payload;
+      const { taskId, newStatus, oldStatus, newIndex } = action.payload;
 
       const oldTaskStatusFields = TASK_STATUS_FIELDS[oldStatus];
       const newTaskStatusFields = TASK_STATUS_FIELDS[newStatus];
 
-      // Remove the taskId from old status ids
-      state[oldTaskStatusFields.ids] = state[oldTaskStatusFields.ids].filter(
+      // Remove the taskId from the old status ids
+      const updatedOldIds = state[oldTaskStatusFields.ids].filter(
         (id) => id !== taskId,
       );
 
+      state[oldTaskStatusFields.ids] = updatedOldIds;
+
       // Remove the task data from old status data
-      const { [action.payload.taskId]: removedItem, ...newData } =
+      const { [taskId]: removedItem, ...remainingOldData } =
         state[oldTaskStatusFields.data];
-      state[oldTaskStatusFields.data] = newData;
+      state[oldTaskStatusFields.data] = remainingOldData;
 
-      // Add the taskId to new status ids
-      state[newTaskStatusFields.ids] = [
-        ...state[newTaskStatusFields.ids],
-        taskId,
-      ];
+      // Add the taskId to the new status ids at the correct newIndex
+      const updatedNewIds = [...state[newTaskStatusFields.ids]];
+      updatedNewIds.splice(newIndex, 0, taskId);
 
-      // Add the task data to new status data
+      state[newTaskStatusFields.ids] = updatedNewIds;
+
+      // Add the task data to the new status data, updating its status
       state[newTaskStatusFields.data] = {
         ...state[newTaskStatusFields.data],
         [taskId]: { ...removedItem, status: newStatus },
       };
     },
-    updateTaskOrderLocally: (
+
+    updateTaskPositionLocally: (
       state,
       action: PayloadAction<{
         taskId: string;
@@ -412,7 +465,10 @@ const tasksSlice = createSlice({
   },
 });
 
-export const { setNewTaskStatus, setSearchTerm, updateTaskOrderLocally } =
-  tasksSlice.actions;
+export const {
+  updateTaskStatusAndPositionLocally,
+  setSearchTerm,
+  updateTaskPositionLocally,
+} = tasksSlice.actions;
 
 export default tasksSlice.reducer;

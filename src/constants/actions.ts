@@ -15,7 +15,7 @@ export default {
 
   // tasks
   createTask: 'tasks/createTask',
-  changeTaskStatus: 'tasks/changeTaskStatus',
+  updateTaskStatusAndPosition: 'tasks/updateTaskStatusAndPosition',
   fetchBacklogTasks: 'tasks/fetchBacklogTasks',
   fetchBoardTasks: 'tasks/fetchBoardTasks',
   moveTaskToColumn: 'tasks/moveTaskToColumn',
