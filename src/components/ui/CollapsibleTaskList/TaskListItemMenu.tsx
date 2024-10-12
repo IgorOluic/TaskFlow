@@ -26,7 +26,7 @@ const TaskListItemMenu = ({ taskId, status }: TaskMenuProps) => {
         taskId,
         newStatus: isInBoard ? TaskStatus.backlog : TaskStatus.board,
         oldStatus: status,
-        newIndex: 0,
+        droppedAtIndex: 0,
       }),
     );
   };

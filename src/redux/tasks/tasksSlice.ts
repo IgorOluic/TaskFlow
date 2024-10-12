@@ -113,21 +113,21 @@ export const updateTaskStatusAndPosition = createAsyncThunk(
       taskId,
       newStatus,
       oldStatus,
-      newIndex,
+      droppedAtIndex,
     }: {
       taskId: string;
       newStatus: TaskStatus;
       oldStatus: TaskStatus;
-      newIndex: number;
+      droppedAtIndex: number;
     },
     { rejectWithValue, dispatch, getState },
   ) => {
     try {
       const state = getState() as RootState;
 
-      const calculatedIndex = calculateNewTaskIndex({
+      const newIndex = calculateNewTaskIndex({
         state,
-        newIndex,
+        droppedAtIndex,
         taskStatus: newStatus,
       });
 
@@ -136,7 +136,7 @@ export const updateTaskStatusAndPosition = createAsyncThunk(
           taskId,
           newStatus,
           oldStatus,
-          newIndex: calculatedIndex,
+          newIndex,
         }),
       );
 
@@ -174,7 +174,7 @@ export const updateTaskStatusAndPosition = createAsyncThunk(
           oldOrder.splice(oldIndex, 1);
         }
 
-        newOrder.splice(calculatedIndex, 0, taskId);
+        newOrder.splice(newIndex, 0, taskId);
 
         transaction.update(taskRef, {
           status: newStatus,
@@ -316,11 +316,11 @@ export const updateTaskPosition = createAsyncThunk(
   async (
     {
       taskId,
-      newIndex,
+      droppedAtIndex,
       taskStatus,
     }: {
       taskId: string;
-      newIndex: number;
+      droppedAtIndex: number;
       taskStatus: TaskStatus;
     },
     { rejectWithValue, getState, dispatch },
@@ -328,16 +328,16 @@ export const updateTaskPosition = createAsyncThunk(
     try {
       const state = getState() as RootState;
 
-      const calculatedIndex = calculateNewTaskIndex({
+      const newIndex = calculateNewTaskIndex({
         state,
         taskStatus,
-        newIndex,
+        droppedAtIndex,
       });
 
       dispatch(
         updateTaskPositionLocally({
           taskId,
-          newIndex: calculatedIndex,
+          newIndex,
           taskStatus,
         }),
       );
@@ -369,7 +369,7 @@ export const updateTaskPosition = createAsyncThunk(
         }
 
         taskOrder.splice(currentIndex, 1);
-        taskOrder.splice(calculatedIndex, 0, taskId);
+        taskOrder.splice(newIndex, 0, taskId);
 
         transaction.update(taskOrderRef, { taskOrder });
       });

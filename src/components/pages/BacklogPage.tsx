@@ -51,7 +51,7 @@ const BacklogPage = () => {
       dispatch(
         updateTaskStatusAndPosition({
           taskId: draggableId,
-          newIndex: destination.index,
+          droppedAtIndex: destination.index,
           newStatus: taskStatus,
           oldStatus,
         }),
@@ -60,7 +60,7 @@ const BacklogPage = () => {
       dispatch(
         updateTaskPosition({
           taskId: draggableId,
-          newIndex: destination.index,
+          droppedAtIndex: destination.index,
           taskStatus,
         }),
       );

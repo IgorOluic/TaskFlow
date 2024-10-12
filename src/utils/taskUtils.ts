@@ -11,20 +11,20 @@ import { TaskStatus } from '../redux/tasks/tasksTypes';
 export const calculateNewTaskIndex = ({
   state,
   taskStatus,
-  newIndex,
+  droppedAtIndex,
 }: {
   state: RootState;
   taskStatus: TaskStatus;
-  newIndex: number;
+  droppedAtIndex: number;
 }) => {
   const taskStatusFields = TASK_STATUS_FIELDS[taskStatus];
   const filteredTaskIds = state.tasks[taskStatusFields.filteredIds];
   const allTaskIds = state.tasks[taskStatusFields.ids];
 
   // Case when inserting to the beggining of the list
-  if (newIndex === 0) {
+  if (droppedAtIndex === 0) {
     // Try to get the ID of the next item in the filtered list
-    const nextId = filteredTaskIds[newIndex];
+    const nextId = filteredTaskIds[droppedAtIndex];
 
     if (nextId) {
       // If we fin the ID of the next item in the filtered list, we get its index from the unfiltered list
@@ -39,7 +39,7 @@ export const calculateNewTaskIndex = ({
   }
 
   // In all other cases there should be a previous item
-  const previousId = filteredTaskIds[newIndex - 1];
+  const previousId = filteredTaskIds[droppedAtIndex - 1];
 
   if (previousId) {
     const indexOfPreviousItem = allTaskIds.findIndex(
