@@ -1,9 +1,10 @@
-import { Flex, HStack, Text, VStack } from '@chakra-ui/react';
+import { Box, Flex, HStack, Text, VStack } from '@chakra-ui/react';
 import { useAppSelector } from '../../../hooks/useAppSelector';
 import { selectBoardTaskById } from '../../../redux/tasks/tasksSelectors';
 import TinyAssigneeSelection from '../AssigneeSelection/TinyAssigneeSelection';
 import { BOARD_TASKS_DATA } from '../../../constants/tasks';
-import { useRef, useState } from 'react';
+import { Draggable } from '@hello-pangea/dnd';
+import { memo } from 'react';
 
 interface TaskBoardItemProps {
   taskId: string;
@@ -11,45 +12,9 @@ interface TaskBoardItemProps {
 
 const TaskBoardItem = ({ taskId }: TaskBoardItemProps) => {
   const task = useAppSelector(selectBoardTaskById(taskId));
-  const [isDragging, setIsDragging] = useState(false);
-  const taskRef = useRef<HTMLDivElement>(null);
-
-  const onDragStart = (event: React.DragEvent<HTMLDivElement>) => {
-    event.dataTransfer.setData('taskId', taskId);
-    event.dataTransfer.effectAllowed = 'move';
-
-    // Get the actual width of the component and apply it to the drag image
-    if (taskRef.current) {
-      const { offsetWidth } = taskRef.current;
-      const dragImage = taskRef.current.cloneNode(true) as HTMLDivElement;
-      dragImage.style.width = `${offsetWidth}px`;
-      dragImage.style.borderColor = 'transparent';
-      document.body.appendChild(dragImage);
-      event.dataTransfer.setDragImage(dragImage, 0, 0);
-      setTimeout(() => document.body.removeChild(dragImage), 0);
-    }
-
-    setIsDragging(true);
-  };
-
-  const onDragEnd = () => {
-    setIsDragging(false);
-  };
 
   return (
-    <VStack
-      ref={taskRef}
-      w="full"
-      backgroundColor="white"
-      borderRadius={8}
-      p={2}
-      borderWidth={1}
-      cursor="pointer"
-      draggable
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      borderColor={isDragging ? 'purple.400' : 'gray.200'}
-    >
+    <VStack w="full">
       <Flex flex={1} w="full" mb={2}>
         <Text fontSize={14}>{task.summary}</Text>
       </Flex>
@@ -69,4 +34,39 @@ const TaskBoardItem = ({ taskId }: TaskBoardItemProps) => {
   );
 };
 
-export default TaskBoardItem;
+interface DraggableTaskBoardItemProps {
+  taskId: string;
+  index: number;
+}
+
+// TODO: Possibly merge this with existing withDraggable and use it in both places
+
+const withDraggable = <P extends object>(
+  WrappedComponent: React.ComponentType<P>,
+) => {
+  return ({ taskId, index, ...props }: DraggableTaskBoardItemProps) => {
+    return (
+      <Draggable draggableId={taskId} index={index}>
+        {(provided, snapshot) => (
+          <Box
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            w="full"
+            mb={2}
+            backgroundColor={snapshot.isDragging ? 'purple.100' : 'white'}
+            borderRadius={8}
+            p={2}
+            borderWidth={1}
+            cursor="pointer"
+            borderColor="gray.200"
+          >
+            <WrappedComponent taskId={taskId} {...(props as P)} />
+          </Box>
+        )}
+      </Draggable>
+    );
+  };
+};
+
+export default withDraggable(memo(TaskBoardItem));

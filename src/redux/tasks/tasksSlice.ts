@@ -21,6 +21,7 @@ import { groupFirestoreDocsById } from '../../utils/dataUtils';
 import { TASK_STATUS_FIELDS } from '../../constants/tasks';
 import actions from '../../constants/actions';
 import { RootState } from '../store';
+import { calculateNewTaskIndex } from '../../utils/taskUtils';
 
 // TODO: Choosing where to create a task: backlog/board
 export const createTask = createAsyncThunk(
@@ -123,6 +124,22 @@ export const updateTaskStatusAndPosition = createAsyncThunk(
   ) => {
     try {
       const state = getState() as RootState;
+
+      const calculatedIndex = calculateNewTaskIndex({
+        state,
+        newIndex,
+        taskStatus: newStatus,
+      });
+
+      dispatch(
+        updateTaskStatusAndPositionLocally({
+          taskId,
+          newStatus,
+          oldStatus,
+          newIndex: calculatedIndex,
+        }),
+      );
+
       const projectId = state.projects.selectedProjectId;
 
       if (!projectId) {
@@ -139,15 +156,6 @@ export const updateTaskStatusAndPosition = createAsyncThunk(
       );
 
       const taskRef = doc(db, `projects/${projectId}/tasks/${taskId}`);
-
-      dispatch(
-        updateTaskStatusAndPositionLocally({
-          taskId,
-          newStatus,
-          oldStatus,
-          newIndex,
-        }),
-      );
 
       await runTransaction(db, async (transaction) => {
         const oldOrderDoc = await transaction.get(taskOrderRefOld);
@@ -166,7 +174,7 @@ export const updateTaskStatusAndPosition = createAsyncThunk(
           oldOrder.splice(oldIndex, 1);
         }
 
-        newOrder.splice(newIndex, 0, taskId);
+        newOrder.splice(calculatedIndex, 0, taskId);
 
         transaction.update(taskRef, {
           status: newStatus,
@@ -318,15 +326,22 @@ export const updateTaskPosition = createAsyncThunk(
     { rejectWithValue, getState, dispatch },
   ) => {
     try {
+      const state = getState() as RootState;
+
+      const calculatedIndex = calculateNewTaskIndex({
+        state,
+        taskStatus,
+        newIndex,
+      });
+
       dispatch(
         updateTaskPositionLocally({
           taskId,
-          newIndex,
+          newIndex: calculatedIndex,
           taskStatus,
         }),
       );
 
-      const state = getState() as RootState;
       const projectId = state.projects.selectedProjectId;
 
       if (!projectId) {
@@ -354,7 +369,7 @@ export const updateTaskPosition = createAsyncThunk(
         }
 
         taskOrder.splice(currentIndex, 1);
-        taskOrder.splice(newIndex, 0, taskId);
+        taskOrder.splice(calculatedIndex, 0, taskId);
 
         transaction.update(taskOrderRef, { taskOrder });
       });
@@ -368,8 +383,10 @@ export const updateTaskPosition = createAsyncThunk(
 const initialState: ITasksState = {
   tasks: [],
   backlogTaskIds: [],
+  filteredBacklogTaskIds: [],
   backlogTasksData: {},
   boardTaskIds: [],
+  filteredBoardTaskIds: [],
   boardTasksData: {},
   search: '',
 };
@@ -378,8 +395,29 @@ const tasksSlice = createSlice({
   name: 'projects',
   initialState,
   reducers: {
-    setSearchTerm: (state, action: PayloadAction<{ search: string }>) => {
-      state.search = action.payload.search;
+    filterAllTasks: (state, action: PayloadAction<string | null>) => {
+      if (!action.payload) {
+        state.filteredBacklogTaskIds = state.backlogTaskIds;
+        state.filteredBoardTaskIds = state.boardTaskIds;
+      } else {
+        const searchQuery = action.payload.toLowerCase();
+
+        state.filteredBacklogTaskIds = state.backlogTaskIds.filter((taskId) => {
+          const task = state.backlogTasksData[taskId];
+          return (
+            task.summary.toLowerCase().includes(searchQuery) ||
+            task.id.toLowerCase().includes(searchQuery)
+          );
+        });
+
+        state.filteredBoardTaskIds = state.boardTaskIds.filter((taskId) => {
+          const task = state.boardTasksData[taskId];
+          return (
+            task.summary.toLowerCase().includes(searchQuery) ||
+            task.id.toLowerCase().includes(searchQuery)
+          );
+        });
+      }
     },
     updateTaskStatusAndPositionLocally: (
       state,
@@ -400,7 +438,12 @@ const tasksSlice = createSlice({
         (id) => id !== taskId,
       );
 
+      const updatedOldFilteredIds = state[
+        oldTaskStatusFields.filteredIds
+      ].filter((id) => id !== taskId);
+
       state[oldTaskStatusFields.ids] = updatedOldIds;
+      state[oldTaskStatusFields.filteredIds] = updatedOldFilteredIds;
 
       // Remove the task data from old status data
       const { [taskId]: removedItem, ...remainingOldData } =
@@ -411,7 +454,21 @@ const tasksSlice = createSlice({
       const updatedNewIds = [...state[newTaskStatusFields.ids]];
       updatedNewIds.splice(newIndex, 0, taskId);
 
+      const updatedFilteredNewIds = [
+        ...state[newTaskStatusFields.filteredIds],
+        taskId,
+      ];
+
       state[newTaskStatusFields.ids] = updatedNewIds;
+
+      state[newTaskStatusFields.filteredIds] = updatedFilteredNewIds.sort(
+        (a, b) => {
+          return (
+            state[newTaskStatusFields.ids].indexOf(a) -
+            state[newTaskStatusFields.ids].indexOf(b)
+          );
+        },
+      );
 
       // Add the task data to the new status data, updating its status
       state[newTaskStatusFields.data] = {
@@ -419,7 +476,6 @@ const tasksSlice = createSlice({
         [taskId]: { ...removedItem, status: newStatus },
       };
     },
-
     updateTaskPositionLocally: (
       state,
       action: PayloadAction<{
@@ -430,24 +486,29 @@ const tasksSlice = createSlice({
     ) => {
       const { taskId, newIndex, taskStatus } = action.payload;
 
-      const idsField = TASK_STATUS_FIELDS[taskStatus].ids;
+      const { ids, filteredIds } = TASK_STATUS_FIELDS[taskStatus];
 
-      const currentIndex = state[idsField].indexOf(taskId);
+      const currentIndex = state[ids].indexOf(taskId);
 
       if (currentIndex !== -1) {
-        state[idsField].splice(currentIndex, 1);
+        state[ids].splice(currentIndex, 1);
+        state[ids].splice(newIndex, 0, taskId);
 
-        state[idsField].splice(newIndex, 0, taskId);
+        state[filteredIds] = state[filteredIds].sort((a, b) => {
+          return state[ids].indexOf(a) - state[ids].indexOf(b);
+        });
       }
     },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchBacklogTasks.fulfilled, (state, action) => {
       state.backlogTaskIds = action.payload.ids;
+      state.filteredBacklogTaskIds = action.payload.ids;
       state.backlogTasksData = action.payload.data as BacklogTasksData;
     });
     builder.addCase(fetchBoardTasks.fulfilled, (state, action) => {
       state.boardTaskIds = action.payload.ids;
+      state.filteredBoardTaskIds = action.payload.ids;
       state.boardTasksData = action.payload.data as BoardTasksData;
     });
     builder.addCase(moveTaskToColumn.fulfilled, (state, action) => {
@@ -467,8 +528,8 @@ const tasksSlice = createSlice({
 
 export const {
   updateTaskStatusAndPositionLocally,
-  setSearchTerm,
   updateTaskPositionLocally,
+  filterAllTasks,
 } = tasksSlice.actions;
 
 export default tasksSlice.reducer;

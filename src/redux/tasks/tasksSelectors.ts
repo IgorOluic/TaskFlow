@@ -1,6 +1,10 @@
 import { createSelector } from 'reselect';
 import { RootState } from '../store';
-import { TaskStatusDataFields, TaskStatusIdsFields } from './tasksTypes';
+import {
+  TaskStatusDataFields,
+  TaskStatusFilteredIdsFields,
+  TaskStatusIdsFields,
+} from './tasksTypes';
 
 const selectTasksSlice = (state: RootState) => state.tasks;
 
@@ -8,23 +12,8 @@ export const selectTaskIdsByField = (field: TaskStatusIdsFields) =>
   createSelector([selectTasksSlice], (tasksSlice) => tasksSlice[field]);
 
 export const selectFilteredTaskIdsByField = (
-  idsField: TaskStatusIdsFields,
-  dataField: TaskStatusDataFields,
-) =>
-  createSelector(
-    [selectTasksSlice, selectTasksDataByField(dataField)],
-    (tasksSlice, tasksData) => {
-      const searchQuery = tasksSlice.search.toLowerCase();
-
-      return tasksSlice[idsField].filter((taskId) => {
-        const task = tasksData[taskId];
-        return (
-          task.summary.toLowerCase().includes(searchQuery) ||
-          task.id.toLowerCase().includes(searchQuery)
-        );
-      });
-    },
-  );
+  field: TaskStatusFilteredIdsFields,
+) => createSelector([selectTasksSlice], (tasksSlice) => tasksSlice[field]);
 
 export const selectTasksDataByField = (field: TaskStatusDataFields) =>
   createSelector([selectTasksSlice], (tasksSlice) => tasksSlice[field]);

@@ -7,7 +7,7 @@ import {
 } from '@chakra-ui/react';
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch } from '../../../hooks/useAppDispatch';
-import { setSearchTerm } from '../../../redux/tasks/tasksSlice';
+import { filterAllTasks } from '../../../redux/tasks/tasksSlice';
 import SvgIcon from '../SvgIcon';
 
 const TaskSearchInput = () => {
@@ -16,7 +16,7 @@ const TaskSearchInput = () => {
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      dispatch(setSearchTerm({ search }));
+      dispatch(filterAllTasks(search));
     }, 500);
 
     return () => {
@@ -30,7 +30,7 @@ const TaskSearchInput = () => {
 
   const handleClearSearch = () => {
     setSearch('');
-    dispatch(setSearchTerm({ search: '' }));
+    dispatch(filterAllTasks(null));
   };
 
   return (

@@ -14,7 +14,7 @@ const TaskList = ({ status }: TaskListProps) => {
   const taskStatusFields = TASK_STATUS_FIELDS[status];
 
   const taskIds = useAppSelector(
-    selectFilteredTaskIdsByField(taskStatusFields.ids, taskStatusFields.data),
+    selectFilteredTaskIdsByField(taskStatusFields.filteredIds),
   );
 
   return (
