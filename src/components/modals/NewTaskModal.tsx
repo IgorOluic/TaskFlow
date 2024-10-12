@@ -21,11 +21,13 @@ import RichTextEditor from '../ui/RichTextEditor';
 import { selectSelectedProjectId } from '../../redux/projects/projectsSelectors';
 import AssigneeSelection from '../ui/AssigneeSelection';
 import useVisibilityControl from '../../hooks/useVisibilityControl';
+import { selectColumnIds } from '../../redux/columns/columnsSelectors';
 
 const NewTaskModal = () => {
   const dispatch = useAppDispatch();
   const { isOpen, onOpen, onClose } = useVisibilityControl();
   const selectedProjectId = useAppSelector(selectSelectedProjectId);
+  const columns = useAppSelector(selectColumnIds);
 
   const newData = useRef<{
     summary: string;
@@ -45,6 +47,7 @@ const NewTaskModal = () => {
         createTask({
           projectId: selectedProjectId,
           ...newData.current,
+          columnId: newData.current.columnId || columns[0],
         }),
       );
     }
