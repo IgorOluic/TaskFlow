@@ -3,6 +3,7 @@ import SvgIcon from '../SvgIcon';
 import { TaskStatus } from '../../../redux/tasks/tasksTypes';
 import TaskList from './TaskList';
 import useVisibilityControl from '../../../hooks/useVisibilityControl';
+import TaskCount from './TaskCount';
 
 interface CollapsibleTaskListProps {
   title: string;
@@ -22,13 +23,17 @@ const CollapsibleTaskList = ({ title, status }: CollapsibleTaskListProps) => {
       py={2}
       className="no-select"
     >
-      <HStack w="full" onClick={onToggle} cursor="pointer" py={2} px={2}>
+      <HStack
+        w="full"
+        onClick={onToggle}
+        cursor="pointer"
+        py={2}
+        px={2}
+        alignItems="center"
+      >
         <SvgIcon name="chevronDown" width="12px" height="12px" />
         <Text fontSize={14} fontWeight={600}>
-          {title}{' '}
-          <Text as="span" fontSize={12} fontWeight={500} color="gray.600">
-            {/* {nOfTasksText} */}
-          </Text>
+          {title} <TaskCount status={status} />
         </Text>
       </HStack>
 
