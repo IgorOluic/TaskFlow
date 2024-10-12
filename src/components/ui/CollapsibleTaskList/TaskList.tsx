@@ -1,21 +1,16 @@
 import { VStack } from '@chakra-ui/react';
 import { TaskStatus } from '../../../redux/tasks/tasksTypes';
 import { useAppSelector } from '../../../hooks/useAppSelector';
-import { selectFilteredTaskIdsByField } from '../../../redux/tasks/tasksSelectors';
 import { Droppable } from '@hello-pangea/dnd';
 import TaskListItem from './TaskListItem';
-import { TASK_STATUS_FIELDS } from '../../../constants/tasks';
+import { selectFilteredTaskIds } from '../../../redux/tasks/tasksSelectors';
 
 interface TaskListProps {
   status: TaskStatus;
 }
 
 const TaskList = ({ status }: TaskListProps) => {
-  const taskStatusFields = TASK_STATUS_FIELDS[status];
-
-  const taskIds = useAppSelector(
-    selectFilteredTaskIdsByField(taskStatusFields.filteredIds),
-  );
+  const taskIds = useAppSelector(selectFilteredTaskIds(status));
 
   return (
     <Droppable droppableId={`droppable-${status}`}>
@@ -31,7 +26,7 @@ const TaskList = ({ status }: TaskListProps) => {
             <TaskListItem
               key={task}
               taskId={task}
-              dataField={taskStatusFields.data}
+              status={status}
               index={index}
             />
           ))}

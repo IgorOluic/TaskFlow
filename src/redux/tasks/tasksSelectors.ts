@@ -1,69 +1,35 @@
 import { createSelector } from 'reselect';
 import { RootState } from '../store';
-import {
-  TaskStatusDataFields,
-  TaskStatusFilteredIdsFields,
-  TaskStatusIdsFields,
-} from './tasksTypes';
+import { TaskStatus } from './tasksTypes';
 
 const selectTasksSlice = (state: RootState) => state.tasks;
 
-export const selectTaskIdsByField = (field: TaskStatusIdsFields) =>
-  createSelector([selectTasksSlice], (tasksSlice) => tasksSlice[field]);
+export const selectTaskIds = (status: TaskStatus) =>
+  createSelector(
+    [selectTasksSlice],
+    (tasksSlice) => tasksSlice[status].taskIds,
+  );
 
-export const selectFilteredTaskIdsByField = (
-  field: TaskStatusFilteredIdsFields,
-) => createSelector([selectTasksSlice], (tasksSlice) => tasksSlice[field]);
+export const selectFilteredTaskIds = (status: TaskStatus) =>
+  createSelector(
+    [selectTasksSlice],
+    (tasksSlice) => tasksSlice[status].filteredTaskIds,
+  );
 
-export const selectTasksDataByField = (field: TaskStatusDataFields) =>
-  createSelector([selectTasksSlice], (tasksSlice) => tasksSlice[field]);
+export const selectTasksDataByStatus = (status: TaskStatus) =>
+  createSelector([selectTasksSlice], (tasksSlice) => tasksSlice[status]);
 
-export const selectTaskByIdAndField = (
-  field: TaskStatusDataFields,
-  id: string,
+export const selectTaskByStatusAndId = (status: TaskStatus, id: string) =>
+  createSelector(
+    [selectTasksDataByStatus(status)],
+    (tasksByField) => tasksByField.tasksData[id],
+  );
+
+export const selectColumnFilteredTaskIds = (
+  status: TaskStatus,
+  columnId: string,
 ) =>
   createSelector(
-    [selectTasksDataByField(field)],
-    (tasksByField) => tasksByField[id],
-  );
-
-export const selectBacklogTaskIds = createSelector(
-  [selectTasksSlice],
-  (tasksSlice) => tasksSlice.backlogTaskIds,
-);
-
-export const selectBoardTaskIds = createSelector(
-  [selectTasksSlice],
-  (tasksSlice) => tasksSlice.boardTaskIds,
-);
-
-export const selectBacklogTasksData = createSelector(
-  [selectTasksSlice],
-  (tasksSlice) => tasksSlice.backlogTasksData,
-);
-
-export const selectBoardTasksData = createSelector(
-  [selectTasksSlice],
-  (tasksSlice) => tasksSlice.boardTasksData,
-);
-
-export const selectBacklogTaskById = (taskId: string) =>
-  createSelector(
-    [selectBacklogTasksData],
-    (backlogTasksData) => backlogTasksData[taskId],
-  );
-
-export const selectBoardTaskById = (taskId: string) =>
-  createSelector(
-    [selectBoardTasksData],
-    (boardTasksData) => boardTasksData[taskId],
-  );
-
-export const selectBoardTasksByColumnId = (columnId: string) =>
-  createSelector(
-    [selectBoardTaskIds, selectBoardTasksData],
-    (boardTaskIds, boardTasksData) =>
-      boardTaskIds.filter(
-        (taskId) => boardTasksData[taskId]?.columnId === columnId,
-      ),
+    [selectTasksDataByStatus(status)],
+    (tasksByField) => tasksByField.filteredTaskIdsByColumn[columnId] ?? [],
   );

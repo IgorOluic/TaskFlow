@@ -1,4 +1,5 @@
 import { QueryDocumentSnapshot, Timestamp } from 'firebase/firestore';
+import { ITask, ITasksData, TaskIdsByColumn } from '../redux/tasks/tasksTypes';
 
 interface ProcessedFirestoreData<T> {
   ids: string[];
@@ -35,4 +36,36 @@ export const timestampToISOString = (timestamp: Timestamp) => {
   }
 
   return null;
+};
+
+export const parseTasksData = (
+  documents: QueryDocumentSnapshot<ITask>[],
+  sortedTaskIds: string[],
+): { data: ITasksData; idsByColumn: TaskIdsByColumn } => {
+  const data: Record<string, ITask> = {};
+  const idsByColumn: Record<string, string[]> = {};
+
+  const docMap: Map<string, QueryDocumentSnapshot<ITask>> = new Map();
+  documents.forEach((doc) => {
+    docMap.set(doc.id, doc);
+  });
+
+  sortedTaskIds.forEach((taskId) => {
+    const doc = docMap.get(taskId);
+    if (doc) {
+      const taskData = { ...doc.data(), id: taskId };
+
+      data[taskId] = taskData;
+
+      const { columnId } = taskData;
+
+      if (!idsByColumn[columnId]) {
+        idsByColumn[columnId] = [];
+      }
+
+      idsByColumn[columnId].push(taskId);
+    }
+  });
+
+  return { data, idsByColumn };
 };

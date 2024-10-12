@@ -1,4 +1,3 @@
-import { TASK_STATUS_FIELDS } from '../constants/tasks';
 import { RootState } from '../redux/store';
 import { TaskStatus } from '../redux/tasks/tasksTypes';
 
@@ -17,9 +16,8 @@ export const calculateNewTaskIndex = ({
   taskStatus: TaskStatus;
   droppedAtIndex: number;
 }) => {
-  const taskStatusFields = TASK_STATUS_FIELDS[taskStatus];
-  const filteredTaskIds = state.tasks[taskStatusFields.filteredIds];
-  const allTaskIds = state.tasks[taskStatusFields.ids];
+  const filteredTaskIds = state.tasks[taskStatus].filteredTaskIds;
+  const allTaskIds = state.tasks[taskStatus].taskIds;
 
   // Case when inserting to the beggining of the list
   if (droppedAtIndex === 0) {

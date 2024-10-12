@@ -8,17 +8,11 @@ import {
   runTransaction,
   updateDoc,
   getDoc,
+  QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
-import {
-  BacklogTasksData,
-  BoardTasksData,
-  ITasksState,
-  TaskStatus,
-  TaskStatusDataFields,
-} from './tasksTypes';
-import { groupFirestoreDocsById } from '../../utils/dataUtils';
-import { TASK_STATUS_FIELDS } from '../../constants/tasks';
+import { ITask, ITasksState, TaskStatus } from './tasksTypes';
+import { parseTasksData } from '../../utils/dataUtils';
 import actions from '../../constants/actions';
 import { RootState } from '../store';
 import { calculateNewTaskIndex } from '../../utils/taskUtils';
@@ -209,17 +203,20 @@ export const fetchBacklogTasks = createAsyncThunk(
 
       const querySnapshot = await getDocs(q);
 
-      const { data } = groupFirestoreDocsById(querySnapshot.docs);
-
       const taskOrderRef = doc(db, `projects/${projectId}/taskOrders/backlog`);
       const taskOrderSnapshot = await getDoc(taskOrderRef);
 
-      let taskOrder = [];
+      let sortedTaskIds = [];
       if (taskOrderSnapshot.exists()) {
-        taskOrder = taskOrderSnapshot.data().taskOrder || [];
+        sortedTaskIds = taskOrderSnapshot.data().taskOrder || [];
       }
 
-      return { ids: taskOrder, data };
+      const { data, idsByColumn } = parseTasksData(
+        querySnapshot.docs as QueryDocumentSnapshot<ITask>[],
+        sortedTaskIds,
+      );
+
+      return { sortedTaskIds, data, idsByColumn };
     } catch (error) {
       console.error('Error fetching backlog tasks:', error);
       return rejectWithValue('Failed to fetch backlog tasks');
@@ -237,17 +234,20 @@ export const fetchBoardTasks = createAsyncThunk(
 
       const querySnapshot = await getDocs(q);
 
-      const { data } = groupFirestoreDocsById(querySnapshot.docs);
-
       const taskOrderRef = doc(db, `projects/${projectId}/taskOrders/board`);
       const taskOrderSnapshot = await getDoc(taskOrderRef);
 
-      let taskOrder = [];
+      let sortedTaskIds = [];
       if (taskOrderSnapshot.exists()) {
-        taskOrder = taskOrderSnapshot.data().taskOrder || [];
+        sortedTaskIds = taskOrderSnapshot.data().taskOrder || [];
       }
 
-      return { ids: taskOrder, data };
+      const { data, idsByColumn } = parseTasksData(
+        querySnapshot.docs as QueryDocumentSnapshot<ITask>[],
+        sortedTaskIds,
+      );
+
+      return { sortedTaskIds, data, idsByColumn };
     } catch (error) {
       console.error('Error fetching backlog tasks:', error);
       return rejectWithValue('Failed to fetch backlog tasks');
@@ -261,8 +261,8 @@ export const moveTaskToColumn = createAsyncThunk(
     {
       taskId,
       newColumnId,
-      dataField,
-    }: { taskId: string; newColumnId: string; dataField: TaskStatusDataFields },
+      taskStatus,
+    }: { taskId: string; newColumnId: string; taskStatus: TaskStatus },
     { rejectWithValue, getState },
   ) => {
     try {
@@ -274,7 +274,7 @@ export const moveTaskToColumn = createAsyncThunk(
         columnId: newColumnId,
       });
 
-      return { taskId, newColumnId, dataField };
+      return { taskId, newColumnId, taskStatus };
     } catch (error) {
       console.error('Error moving task to new column:', error);
       return rejectWithValue('Failed to move task to new column');
@@ -288,11 +288,11 @@ export const setTaskAssignee = createAsyncThunk(
     {
       taskId,
       newAssigneeId,
-      dataField,
+      taskStatus,
     }: {
       taskId: string;
       newAssigneeId: string | null;
-      dataField: TaskStatusDataFields;
+      taskStatus: TaskStatus;
     },
     { rejectWithValue, getState },
   ) => {
@@ -303,7 +303,7 @@ export const setTaskAssignee = createAsyncThunk(
 
       await updateDoc(taskRef, { assignedTo: newAssigneeId });
 
-      return { taskId, newAssigneeId, dataField };
+      return { taskId, newAssigneeId, taskStatus };
     } catch (error) {
       console.error('Error setting task assignee:', error);
       return rejectWithValue('Failed to set task assignee');
@@ -381,14 +381,18 @@ export const updateTaskPosition = createAsyncThunk(
 );
 
 const initialState: ITasksState = {
-  tasks: [],
-  backlogTaskIds: [],
-  filteredBacklogTaskIds: [],
-  backlogTasksData: {},
-  boardTaskIds: [],
-  filteredBoardTaskIds: [],
-  boardTasksData: {},
-  search: '',
+  backlog: {
+    tasksData: {},
+    taskIds: [],
+    filteredTaskIds: [],
+    filteredTaskIdsByColumn: {},
+  },
+  board: {
+    tasksData: {},
+    taskIds: [],
+    filteredTaskIds: [],
+    filteredTaskIdsByColumn: {},
+  },
 };
 
 const tasksSlice = createSlice({
@@ -397,21 +401,25 @@ const tasksSlice = createSlice({
   reducers: {
     filterAllTasks: (state, action: PayloadAction<string | null>) => {
       if (!action.payload) {
-        state.filteredBacklogTaskIds = state.backlogTaskIds;
-        state.filteredBoardTaskIds = state.boardTaskIds;
+        // TODO: At the moment this resets the filters when the search is cleared,
+        // needs to be updated when user filters are implemented
+        state.backlog.filteredTaskIds = state.backlog.taskIds;
+        state.board.filteredTaskIds = state.board.taskIds;
       } else {
         const searchQuery = action.payload.toLowerCase();
 
-        state.filteredBacklogTaskIds = state.backlogTaskIds.filter((taskId) => {
-          const task = state.backlogTasksData[taskId];
-          return (
-            task.summary.toLowerCase().includes(searchQuery) ||
-            task.id.toLowerCase().includes(searchQuery)
-          );
-        });
+        state.backlog.filteredTaskIds = state.backlog.taskIds.filter(
+          (taskId) => {
+            const task = state.backlog.tasksData[taskId];
+            return (
+              task.summary.toLowerCase().includes(searchQuery) ||
+              task.id.toLowerCase().includes(searchQuery)
+            );
+          },
+        );
 
-        state.filteredBoardTaskIds = state.boardTaskIds.filter((taskId) => {
-          const task = state.boardTasksData[taskId];
+        state.board.filteredTaskIds = state.board.taskIds.filter((taskId) => {
+          const task = state.board.tasksData[taskId];
           return (
             task.summary.toLowerCase().includes(searchQuery) ||
             task.id.toLowerCase().includes(searchQuery)
@@ -430,49 +438,44 @@ const tasksSlice = createSlice({
     ) => {
       const { taskId, newStatus, oldStatus, newIndex } = action.payload;
 
-      const oldTaskStatusFields = TASK_STATUS_FIELDS[oldStatus];
-      const newTaskStatusFields = TASK_STATUS_FIELDS[newStatus];
-
-      // Remove the taskId from the old status ids
-      const updatedOldIds = state[oldTaskStatusFields.ids].filter(
+      // Remove the taskId from old status ids and filteredIds
+      const updatedOldIds = state[oldStatus].taskIds.filter(
+        (id) => id !== taskId,
+      );
+      const updatedOldFilteredIds = state[oldStatus].filteredTaskIds.filter(
         (id) => id !== taskId,
       );
 
-      const updatedOldFilteredIds = state[
-        oldTaskStatusFields.filteredIds
-      ].filter((id) => id !== taskId);
-
-      state[oldTaskStatusFields.ids] = updatedOldIds;
-      state[oldTaskStatusFields.filteredIds] = updatedOldFilteredIds;
+      state[oldStatus].taskIds = updatedOldIds;
+      state[oldStatus].filteredTaskIds = updatedOldFilteredIds;
 
       // Remove the task data from old status data
       const { [taskId]: removedItem, ...remainingOldData } =
-        state[oldTaskStatusFields.data];
-      state[oldTaskStatusFields.data] = remainingOldData;
+        state[oldStatus].tasksData;
 
-      // Add the taskId to the new status ids at the correct newIndex
-      const updatedNewIds = [...state[newTaskStatusFields.ids]];
+      state[oldStatus].tasksData = remainingOldData;
+
+      // Add the taskId to new status ids and filteredIds at the correct newIndex
+      const updatedNewIds = [...state[newStatus].taskIds];
       updatedNewIds.splice(newIndex, 0, taskId);
 
       const updatedFilteredNewIds = [
-        ...state[newTaskStatusFields.filteredIds],
+        ...state[newStatus].filteredTaskIds,
         taskId,
       ];
 
-      state[newTaskStatusFields.ids] = updatedNewIds;
+      state[newStatus].taskIds = updatedNewIds;
 
-      state[newTaskStatusFields.filteredIds] = updatedFilteredNewIds.sort(
-        (a, b) => {
-          return (
-            state[newTaskStatusFields.ids].indexOf(a) -
-            state[newTaskStatusFields.ids].indexOf(b)
-          );
-        },
-      );
+      state[newStatus].filteredTaskIds = updatedFilteredNewIds.sort((a, b) => {
+        return (
+          state[newStatus].taskIds.indexOf(a) -
+          state[newStatus].taskIds.indexOf(b)
+        );
+      });
 
       // Add the task data to the new status data, updating its status
-      state[newTaskStatusFields.data] = {
-        ...state[newTaskStatusFields.data],
+      state[newStatus].tasksData = {
+        ...state[newStatus].tasksData,
         [taskId]: { ...removedItem, status: newStatus },
       };
     },
@@ -486,40 +489,47 @@ const tasksSlice = createSlice({
     ) => {
       const { taskId, newIndex, taskStatus } = action.payload;
 
-      const { ids, filteredIds } = TASK_STATUS_FIELDS[taskStatus];
-
-      const currentIndex = state[ids].indexOf(taskId);
+      const currentIndex = state[taskStatus].taskIds.indexOf(taskId);
 
       if (currentIndex !== -1) {
-        state[ids].splice(currentIndex, 1);
-        state[ids].splice(newIndex, 0, taskId);
+        state[taskStatus].taskIds.splice(currentIndex, 1);
+        state[taskStatus].taskIds.splice(newIndex, 0, taskId);
 
-        state[filteredIds] = state[filteredIds].sort((a, b) => {
-          return state[ids].indexOf(a) - state[ids].indexOf(b);
+        state[taskStatus].filteredTaskIds = state[
+          taskStatus
+        ].filteredTaskIds.sort((a, b) => {
+          return (
+            state[taskStatus].taskIds.indexOf(a) -
+            state[taskStatus].taskIds.indexOf(b)
+          );
         });
       }
     },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchBacklogTasks.fulfilled, (state, action) => {
-      state.backlogTaskIds = action.payload.ids;
-      state.filteredBacklogTaskIds = action.payload.ids;
-      state.backlogTasksData = action.payload.data as BacklogTasksData;
+      state.backlog.tasksData = action.payload.data;
+      state.backlog.taskIds = action.payload.sortedTaskIds;
+      state.backlog.filteredTaskIds = action.payload.sortedTaskIds;
+      state.backlog.filteredTaskIdsByColumn = action.payload.idsByColumn;
     });
     builder.addCase(fetchBoardTasks.fulfilled, (state, action) => {
-      state.boardTaskIds = action.payload.ids;
-      state.filteredBoardTaskIds = action.payload.ids;
-      state.boardTasksData = action.payload.data as BoardTasksData;
+      state.board.tasksData = action.payload.data;
+      state.board.taskIds = action.payload.sortedTaskIds;
+      state.board.filteredTaskIds = action.payload.sortedTaskIds;
+      state.board.filteredTaskIdsByColumn = action.payload.idsByColumn;
     });
     builder.addCase(moveTaskToColumn.fulfilled, (state, action) => {
-      state[action.payload.dataField][action.payload.taskId] = {
-        ...state[action.payload.dataField][action.payload.taskId],
+      state[action.payload.taskStatus].tasksData[action.payload.taskId] = {
+        ...state[action.payload.taskStatus].tasksData[action.payload.taskId],
         columnId: action.payload.newColumnId,
       };
+
+      // TODO: ADJUST FILTERED IDS
     });
     builder.addCase(setTaskAssignee.fulfilled, (state, action) => {
-      state[action.payload.dataField][action.payload.taskId] = {
-        ...state[action.payload.dataField][action.payload.taskId],
+      state[action.payload.taskStatus].tasksData[action.payload.taskId] = {
+        ...state[action.payload.taskStatus].tasksData[action.payload.taskId],
         assignedTo: action.payload.newAssigneeId,
       };
     });
