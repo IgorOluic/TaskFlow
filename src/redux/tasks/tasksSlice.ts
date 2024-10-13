@@ -409,14 +409,14 @@ const tasksSlice = createSlice({
         state.backlog.filteredTaskIds = state.backlog.taskIds;
         state.backlog.filteredTaskIdsByColumn =
           recalculateFilteredTaskIdsByColumn({
-            tasksData: state.backlog.tasksData,
-            filteredTaskIds: state.backlog.filteredTaskIds,
+            state,
+            status: TaskStatus.backlog,
           });
         state.board.filteredTaskIds = state.board.taskIds;
         state.board.filteredTaskIdsByColumn =
           recalculateFilteredTaskIdsByColumn({
-            tasksData: state.board.tasksData,
-            filteredTaskIds: state.board.filteredTaskIds,
+            state,
+            status: TaskStatus.board,
           });
       } else {
         const searchQuery = action.payload.toLowerCase();
@@ -433,8 +433,8 @@ const tasksSlice = createSlice({
 
         state.backlog.filteredTaskIdsByColumn =
           recalculateFilteredTaskIdsByColumn({
-            tasksData: state.backlog.tasksData,
-            filteredTaskIds: state.backlog.filteredTaskIds,
+            state,
+            status: TaskStatus.backlog,
           });
 
         state.board.filteredTaskIds = state.board.taskIds.filter((taskId) => {
@@ -447,8 +447,8 @@ const tasksSlice = createSlice({
 
         state.board.filteredTaskIdsByColumn =
           recalculateFilteredTaskIdsByColumn({
-            tasksData: state.board.tasksData,
-            filteredTaskIds: state.board.filteredTaskIds,
+            state,
+            status: TaskStatus.board,
           });
       }
     },
@@ -483,8 +483,8 @@ const tasksSlice = createSlice({
       // Recalculate filtered task ids by column
       state[oldStatus].filteredTaskIdsByColumn =
         recalculateFilteredTaskIdsByColumn({
-          tasksData: state[oldStatus].tasksData,
-          filteredTaskIds: state[oldStatus].filteredTaskIds,
+          state,
+          status: oldStatus,
         });
 
       // Add the taskId to new status ids and filteredIds at the correct newIndex
@@ -513,8 +513,8 @@ const tasksSlice = createSlice({
 
       state[newStatus].filteredTaskIdsByColumn =
         recalculateFilteredTaskIdsByColumn({
-          tasksData: state[newStatus].tasksData,
-          filteredTaskIds: state[newStatus].filteredTaskIds,
+          state,
+          status: newStatus,
         });
     },
     updateTaskPositionLocally: (
@@ -544,8 +544,8 @@ const tasksSlice = createSlice({
 
         state[taskStatus].filteredTaskIdsByColumn =
           recalculateFilteredTaskIdsByColumn({
-            tasksData: state[taskStatus].tasksData,
-            filteredTaskIds: state[taskStatus].filteredTaskIds,
+            state,
+            status: taskStatus,
           });
       }
     },
@@ -571,8 +571,8 @@ const tasksSlice = createSlice({
 
       state[action.payload.taskStatus].filteredTaskIdsByColumn =
         recalculateFilteredTaskIdsByColumn({
-          tasksData: state[action.payload.taskStatus].tasksData,
-          filteredTaskIds: state[action.payload.taskStatus].filteredTaskIds,
+          state,
+          status: action.payload.taskStatus,
         });
     });
     builder.addCase(setTaskAssignee.fulfilled, (state, action) => {

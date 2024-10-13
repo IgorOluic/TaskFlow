@@ -1,6 +1,6 @@
 import { RootState } from '../redux/store';
 import {
-  ITasksData,
+  ITasksState,
   TaskIdsByColumn,
   TaskStatus,
 } from '../redux/tasks/tasksTypes';
@@ -56,13 +56,14 @@ export const calculateNewTaskIndex = ({
 };
 
 export const recalculateFilteredTaskIdsByColumn = ({
-  tasksData,
-  filteredTaskIds,
+  state,
+  status,
 }: {
-  tasksData: ITasksData;
-  filteredTaskIds: string[];
+  state: ITasksState;
+  status: TaskStatus;
 }): TaskIdsByColumn => {
   const idsByColumn: TaskIdsByColumn = {};
+  const { filteredTaskIds, tasksData } = state[status];
 
   filteredTaskIds.forEach((taskId) => {
     const taskData = tasksData[taskId];
