@@ -1,7 +1,10 @@
 import { Text } from '@chakra-ui/react';
 import { TaskStatus } from '../../../redux/tasks/tasksTypes';
 import { useAppSelector } from '../../../hooks/useAppSelector';
-import { selectFilteredTaskIds } from '../../../redux/tasks/tasksSelectors';
+import {
+  selectFilteredTaskCount,
+  selectTotalTaskCount,
+} from '../../../redux/tasks/tasksSelectors';
 import { useMemo } from 'react';
 
 interface TaskCountProps {
@@ -9,8 +12,8 @@ interface TaskCountProps {
 }
 
 const TaskCount = ({ status }: TaskCountProps) => {
-  const totalCount = useAppSelector(selectFilteredTaskIds(status)).length;
-  const filteredCount = useAppSelector(selectFilteredTaskIds(status)).length;
+  const totalCount = useAppSelector(selectTotalTaskCount(status));
+  const filteredCount = useAppSelector(selectFilteredTaskCount(status));
 
   const countText = useMemo(() => {
     if (totalCount === filteredCount) {

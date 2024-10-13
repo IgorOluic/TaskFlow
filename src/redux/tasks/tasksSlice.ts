@@ -15,7 +15,10 @@ import { ITask, ITasksState, TaskStatus } from './tasksTypes';
 import { parseTasksData } from '../../utils/dataUtils';
 import actions from '../../constants/actions';
 import { RootState } from '../store';
-import { calculateNewTaskIndex } from '../../utils/taskUtils';
+import {
+  calculateNewTaskIndex,
+  recalculateFilteredTaskIdsByColumn,
+} from '../../utils/taskUtils';
 
 // TODO: Choosing where to create a task: backlog/board
 export const createTask = createAsyncThunk(
@@ -404,7 +407,17 @@ const tasksSlice = createSlice({
         // TODO: At the moment this resets the filters when the search is cleared,
         // needs to be updated when user filters are implemented
         state.backlog.filteredTaskIds = state.backlog.taskIds;
+        state.backlog.filteredTaskIdsByColumn =
+          recalculateFilteredTaskIdsByColumn({
+            tasksData: state.backlog.tasksData,
+            filteredTaskIds: state.backlog.filteredTaskIds,
+          });
         state.board.filteredTaskIds = state.board.taskIds;
+        state.board.filteredTaskIdsByColumn =
+          recalculateFilteredTaskIdsByColumn({
+            tasksData: state.board.tasksData,
+            filteredTaskIds: state.board.filteredTaskIds,
+          });
       } else {
         const searchQuery = action.payload.toLowerCase();
 
@@ -418,6 +431,12 @@ const tasksSlice = createSlice({
           },
         );
 
+        state.backlog.filteredTaskIdsByColumn =
+          recalculateFilteredTaskIdsByColumn({
+            tasksData: state.backlog.tasksData,
+            filteredTaskIds: state.backlog.filteredTaskIds,
+          });
+
         state.board.filteredTaskIds = state.board.taskIds.filter((taskId) => {
           const task = state.board.tasksData[taskId];
           return (
@@ -425,6 +444,12 @@ const tasksSlice = createSlice({
             task.id.toLowerCase().includes(searchQuery)
           );
         });
+
+        state.board.filteredTaskIdsByColumn =
+          recalculateFilteredTaskIdsByColumn({
+            tasksData: state.board.tasksData,
+            filteredTaskIds: state.board.filteredTaskIds,
+          });
       }
     },
     updateTaskStatusAndPositionLocally: (
@@ -455,6 +480,13 @@ const tasksSlice = createSlice({
 
       state[oldStatus].tasksData = remainingOldData;
 
+      // Recalculate filtered task ids by column
+      state[oldStatus].filteredTaskIdsByColumn =
+        recalculateFilteredTaskIdsByColumn({
+          tasksData: state[oldStatus].tasksData,
+          filteredTaskIds: state[oldStatus].filteredTaskIds,
+        });
+
       // Add the taskId to new status ids and filteredIds at the correct newIndex
       const updatedNewIds = [...state[newStatus].taskIds];
       updatedNewIds.splice(newIndex, 0, taskId);
@@ -478,6 +510,12 @@ const tasksSlice = createSlice({
         ...state[newStatus].tasksData,
         [taskId]: { ...removedItem, status: newStatus },
       };
+
+      state[newStatus].filteredTaskIdsByColumn =
+        recalculateFilteredTaskIdsByColumn({
+          tasksData: state[newStatus].tasksData,
+          filteredTaskIds: state[newStatus].filteredTaskIds,
+        });
     },
     updateTaskPositionLocally: (
       state,
@@ -503,6 +541,12 @@ const tasksSlice = createSlice({
             state[taskStatus].taskIds.indexOf(b)
           );
         });
+
+        state[taskStatus].filteredTaskIdsByColumn =
+          recalculateFilteredTaskIdsByColumn({
+            tasksData: state[taskStatus].tasksData,
+            filteredTaskIds: state[taskStatus].filteredTaskIds,
+          });
       }
     },
   },
@@ -525,7 +569,11 @@ const tasksSlice = createSlice({
         columnId: action.payload.newColumnId,
       };
 
-      // TODO: ADJUST FILTERED IDS
+      state[action.payload.taskStatus].filteredTaskIdsByColumn =
+        recalculateFilteredTaskIdsByColumn({
+          tasksData: state[action.payload.taskStatus].tasksData,
+          filteredTaskIds: state[action.payload.taskStatus].filteredTaskIds,
+        });
     });
     builder.addCase(setTaskAssignee.fulfilled, (state, action) => {
       state[action.payload.taskStatus].tasksData[action.payload.taskId] = {

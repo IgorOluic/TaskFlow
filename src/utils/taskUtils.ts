@@ -1,5 +1,9 @@
 import { RootState } from '../redux/store';
-import { TaskStatus } from '../redux/tasks/tasksTypes';
+import {
+  ITasksData,
+  TaskIdsByColumn,
+  TaskStatus,
+} from '../redux/tasks/tasksTypes';
 
 // Adding comments here to make it easier to understand
 
@@ -49,4 +53,27 @@ export const calculateNewTaskIndex = ({
 
   // Add this as a safety measure
   return allTaskIds.length;
+};
+
+export const recalculateFilteredTaskIdsByColumn = ({
+  tasksData,
+  filteredTaskIds,
+}: {
+  tasksData: ITasksData;
+  filteredTaskIds: string[];
+}): TaskIdsByColumn => {
+  const idsByColumn: TaskIdsByColumn = {};
+
+  filteredTaskIds.forEach((taskId) => {
+    const taskData = tasksData[taskId];
+    const { columnId } = taskData;
+
+    if (!idsByColumn[columnId]) {
+      idsByColumn[columnId] = [];
+    }
+
+    idsByColumn[columnId].push(taskId);
+  });
+
+  return idsByColumn;
 };

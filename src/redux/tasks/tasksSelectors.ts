@@ -33,3 +33,19 @@ export const selectColumnFilteredTaskIds = (
     [selectTasksDataByStatus(status)],
     (tasksByField) => tasksByField.filteredTaskIdsByColumn[columnId] ?? [],
   );
+
+export const selectTotalTaskCount = (status: TaskStatus) =>
+  createSelector([selectTaskIds(status)], (taskIds) => taskIds.length);
+
+export const selectFilteredTaskCount = (status: TaskStatus) =>
+  createSelector(
+    [selectFilteredTaskIds(status)],
+    (filteredTaskIds) => filteredTaskIds.length,
+  );
+
+export const selectColumnTaskCount = (status: TaskStatus, columnId: string) =>
+  createSelector(
+    [selectTasksSlice],
+    (tasksSlice) =>
+      tasksSlice[status].filteredTaskIdsByColumn[columnId]?.length ?? 0,
+  );
