@@ -21,6 +21,7 @@ import {
   removeIdFromList,
   resortFilteredTasks,
 } from '../../utils/taskUtils';
+import taskServices from '../../services/taskServices';
 
 // TODO: Choosing where to create a task: backlog/board
 export const createTask = createAsyncThunk(
@@ -101,99 +102,6 @@ export const createTask = createAsyncThunk(
     } catch (error) {
       console.error('Error creating task:', error);
       return rejectWithValue('Failed to create task');
-    }
-  },
-);
-
-export const updateTaskStatusAndPosition = createAsyncThunk(
-  actions.updateTaskStatusAndPosition,
-  async (
-    {
-      taskId,
-      newStatus,
-      oldStatus,
-      droppedAtIndex,
-    }: {
-      taskId: string;
-      newStatus: TaskStatus;
-      oldStatus: TaskStatus;
-      droppedAtIndex: number;
-    },
-    { rejectWithValue, dispatch, getState },
-  ) => {
-    try {
-      const state = getState() as RootState;
-
-      const newIndex = calculateNewTaskIndex({
-        state,
-        droppedAtIndex,
-        taskStatus: newStatus,
-      });
-
-      dispatch(
-        updateTaskStatusAndPositionLocally({
-          taskId,
-          newStatus,
-          oldStatus,
-          newIndex,
-        }),
-      );
-
-      const projectId = state.projects.selectedProjectId;
-
-      if (!projectId) {
-        throw new Error('Project ID not found.');
-      }
-
-      const taskOrderRefOld = doc(
-        db,
-        `projects/${projectId}/taskOrders/${oldStatus}`,
-      );
-      const taskOrderRefNew = doc(
-        db,
-        `projects/${projectId}/taskOrders/${newStatus}`,
-      );
-
-      const taskRef = doc(db, `projects/${projectId}/tasks/${taskId}`);
-
-      await runTransaction(db, async (transaction) => {
-        const oldOrderDoc = await transaction.get(taskOrderRefOld);
-        const newOrderDoc = await transaction.get(taskOrderRefNew);
-
-        const oldOrder = oldOrderDoc.exists()
-          ? (oldOrderDoc.data().taskOrder as string[])
-          : [];
-
-        const newOrder = newOrderDoc.exists()
-          ? (newOrderDoc.data().taskOrder as string[])
-          : [];
-
-        const oldIndex = oldOrder.indexOf(taskId);
-        if (oldIndex > -1) {
-          oldOrder.splice(oldIndex, 1);
-        }
-
-        newOrder.splice(newIndex, 0, taskId);
-
-        transaction.update(taskRef, {
-          status: newStatus,
-          updatedAt: new Date().toISOString(),
-        });
-
-        transaction.set(
-          taskOrderRefOld,
-          { taskOrder: oldOrder },
-          { merge: true },
-        );
-        transaction.set(
-          taskOrderRefNew,
-          { taskOrder: newOrder },
-          { merge: true },
-        );
-      });
-    } catch (error) {
-      console.error('Error updating task status and position:', error);
-      return rejectWithValue('Failed to update task status and position');
     }
   },
 );
@@ -316,7 +224,7 @@ export const setTaskAssignee = createAsyncThunk(
   },
 );
 
-export const updateTaskPosition = createAsyncThunk(
+export const reorderTaskPosition = createAsyncThunk(
   actions.updateTaskPosition,
   async (
     {
@@ -340,7 +248,7 @@ export const updateTaskPosition = createAsyncThunk(
       });
 
       dispatch(
-        updateTaskPositionLocally({
+        reorderTaskPositionLocally({
           taskId,
           newIndex,
           taskStatus,
@@ -353,34 +261,88 @@ export const updateTaskPosition = createAsyncThunk(
         throw new Error('Project ID not found.');
       }
 
-      const taskOrderRef = doc(
-        db,
-        `projects/${projectId}/taskOrders/${taskStatus}`,
-      );
-
       await runTransaction(db, async (transaction) => {
-        const taskOrderDoc = await transaction.get(taskOrderRef);
-
-        if (!taskOrderDoc.exists()) {
-          throw new Error('Task order document does not exist');
-        }
-
-        const taskOrder = taskOrderDoc.data().taskOrder as string[];
-
-        const currentIndex = taskOrder.indexOf(taskId);
-
-        if (currentIndex === -1) {
-          throw new Error('Task ID not found in task order');
-        }
-
-        taskOrder.splice(currentIndex, 1);
-        taskOrder.splice(newIndex, 0, taskId);
-
-        transaction.update(taskOrderRef, { taskOrder });
+        taskServices.reorderTaskPosition({
+          projectId,
+          taskId,
+          newIndex,
+          taskStatus,
+          transaction,
+        });
       });
     } catch (error) {
       console.error('Error updating task position:', error);
       return rejectWithValue('Failed to update task position');
+    }
+  },
+);
+
+export const updateTaskStatusAndPosition = createAsyncThunk(
+  actions.updateTaskStatusAndPosition,
+  async (
+    {
+      taskId,
+      newStatus,
+      oldStatus,
+      droppedAtIndex,
+    }: {
+      taskId: string;
+      newStatus: TaskStatus;
+      oldStatus: TaskStatus;
+      droppedAtIndex: number;
+    },
+    { rejectWithValue, dispatch, getState },
+  ) => {
+    try {
+      const state = getState() as RootState;
+
+      const newIndex = calculateNewTaskIndex({
+        state,
+        droppedAtIndex,
+        taskStatus: newStatus,
+      });
+
+      dispatch(
+        updateTaskStatusAndPositionLocally({
+          taskId,
+          newStatus,
+          oldStatus,
+          newIndex,
+        }),
+      );
+
+      const projectId = state.projects.selectedProjectId;
+
+      if (!projectId) {
+        throw new Error('Project ID not found.');
+      }
+
+      await runTransaction(db, async (transaction) => {
+        taskServices.removeTaskFromOrder({
+          projectId,
+          taskStatus: oldStatus,
+          taskId,
+          transaction,
+        });
+
+        taskServices.addTaskToOrder({
+          projectId,
+          taskStatus: newStatus,
+          taskId,
+          transaction,
+          newIndex,
+        });
+
+        taskServices.updateTaskStatus({
+          projectId,
+          taskId,
+          newStatus,
+          transaction,
+        });
+      });
+    } catch (error) {
+      console.error('Error updating task status and position:', error);
+      return rejectWithValue('Failed to update task status and position');
     }
   },
 );
@@ -509,7 +471,7 @@ const tasksSlice = createSlice({
       state[newStatus].filteredTaskIds = sortedFilteredTaskIds;
       state[newStatus].filteredTaskIdsByColumn = sortedFilteredIdsByColumn;
     },
-    updateTaskPositionLocally: (
+    reorderTaskPositionLocally: (
       state,
       action: PayloadAction<{
         taskId: string;
@@ -572,7 +534,7 @@ const tasksSlice = createSlice({
 
 export const {
   updateTaskStatusAndPositionLocally,
-  updateTaskPositionLocally,
+  reorderTaskPositionLocally,
   filterTasks,
 } = tasksSlice.actions;
 

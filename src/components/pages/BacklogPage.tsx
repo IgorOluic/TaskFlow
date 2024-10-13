@@ -5,7 +5,7 @@ import { useAppSelector } from '../../hooks/useAppSelector';
 import {
   fetchBacklogTasks,
   fetchBoardTasks,
-  updateTaskPosition,
+  reorderTaskPosition,
   updateTaskStatusAndPosition,
 } from '../../redux/tasks/tasksSlice';
 import CollapsibleTaskList from '../ui/CollapsibleTaskList';
@@ -58,7 +58,7 @@ const BacklogPage = () => {
       );
     } else {
       dispatch(
-        updateTaskPosition({
+        reorderTaskPosition({
           taskId: draggableId,
           droppedAtIndex: destination.index,
           taskStatus,
