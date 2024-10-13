@@ -7,8 +7,9 @@ import {
 } from '@chakra-ui/react';
 import React, { useState, useEffect } from 'react';
 import { useAppDispatch } from '../../../hooks/useAppDispatch';
-import { filterAllTasks } from '../../../redux/tasks/tasksSlice';
+import { filterTasks } from '../../../redux/tasks/tasksSlice';
 import SvgIcon from '../SvgIcon';
+import { TaskStatus } from '../../../redux/tasks/tasksTypes';
 
 const TaskSearchInput = () => {
   const dispatch = useAppDispatch();
@@ -16,7 +17,12 @@ const TaskSearchInput = () => {
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      dispatch(filterAllTasks(search));
+      dispatch(
+        filterTasks({
+          search,
+          statusesToFilter: [TaskStatus.backlog, TaskStatus.board],
+        }),
+      );
     }, 500);
 
     return () => {
@@ -30,7 +36,12 @@ const TaskSearchInput = () => {
 
   const handleClearSearch = () => {
     setSearch('');
-    dispatch(filterAllTasks(null));
+    dispatch(
+      filterTasks({
+        search: null,
+        statusesToFilter: [TaskStatus.backlog, TaskStatus.board],
+      }),
+    );
   };
 
   return (

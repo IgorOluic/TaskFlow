@@ -402,54 +402,46 @@ const tasksSlice = createSlice({
   name: 'projects',
   initialState,
   reducers: {
-    filterAllTasks: (state, action: PayloadAction<string | null>) => {
-      if (!action.payload) {
+    filterTasks: (
+      state,
+      action: PayloadAction<{
+        search: string | null;
+        statusesToFilter: TaskStatus[];
+      }>,
+    ) => {
+      const { search, statusesToFilter } = action.payload;
+
+      if (!search) {
         // TODO: At the moment this resets the filters when the search is cleared,
         // needs to be updated when user filters are implemented
-        state.backlog.filteredTaskIds = state.backlog.taskIds;
-        state.backlog.filteredTaskIdsByColumn =
-          recalculateFilteredTaskIdsByColumn({
-            state,
-            status: TaskStatus.backlog,
-          });
-        state.board.filteredTaskIds = state.board.taskIds;
-        state.board.filteredTaskIdsByColumn =
-          recalculateFilteredTaskIdsByColumn({
-            state,
-            status: TaskStatus.board,
-          });
-      } else {
-        const searchQuery = action.payload.toLowerCase();
-
-        state.backlog.filteredTaskIds = state.backlog.taskIds.filter(
-          (taskId) => {
-            const task = state.backlog.tasksData[taskId];
-            return (
-              task.summary.toLowerCase().includes(searchQuery) ||
-              task.id.toLowerCase().includes(searchQuery)
-            );
-          },
-        );
-
-        state.backlog.filteredTaskIdsByColumn =
-          recalculateFilteredTaskIdsByColumn({
-            state,
-            status: TaskStatus.backlog,
-          });
-
-        state.board.filteredTaskIds = state.board.taskIds.filter((taskId) => {
-          const task = state.board.tasksData[taskId];
-          return (
-            task.summary.toLowerCase().includes(searchQuery) ||
-            task.id.toLowerCase().includes(searchQuery)
-          );
+        statusesToFilter.forEach((status) => {
+          state[status].filteredTaskIds = state[status].taskIds;
+          state[status].filteredTaskIdsByColumn =
+            recalculateFilteredTaskIdsByColumn({
+              state,
+              status,
+            });
         });
+      } else {
+        const searchQuery = search.toLowerCase();
 
-        state.board.filteredTaskIdsByColumn =
-          recalculateFilteredTaskIdsByColumn({
-            state,
-            status: TaskStatus.board,
-          });
+        statusesToFilter.forEach((status) => {
+          state[status].filteredTaskIds = state[status].taskIds.filter(
+            (taskId) => {
+              const task = state[status].tasksData[taskId];
+              return (
+                task.summary.toLowerCase().includes(searchQuery) ||
+                task.id.toLowerCase().includes(searchQuery)
+              );
+            },
+          );
+
+          state[status].filteredTaskIdsByColumn =
+            recalculateFilteredTaskIdsByColumn({
+              state,
+              status,
+            });
+        });
       }
     },
     updateTaskStatusAndPositionLocally: (
@@ -587,7 +579,7 @@ const tasksSlice = createSlice({
 export const {
   updateTaskStatusAndPositionLocally,
   updateTaskPositionLocally,
-  filterAllTasks,
+  filterTasks,
 } = tasksSlice.actions;
 
 export default tasksSlice.reducer;
