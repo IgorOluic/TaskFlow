@@ -11,8 +11,10 @@ interface TaskCountPerColumnProps {
 const TaskCountPerColumn = ({ status }: TaskCountPerColumnProps) => {
   const columnIds = useAppSelector(selectColumnIds);
 
-  const renderCountItem = (columnId: string): JSX.Element => {
-    return <ColumnTaskCountItem status={status} columnId={columnId} />;
+  const renderCountItem = (columnId: string, index: number): JSX.Element => {
+    return (
+      <ColumnTaskCountItem key={index} status={status} columnId={columnId} />
+    );
   };
 
   return <HStack>{columnIds.map(renderCountItem)}</HStack>;
