@@ -18,6 +18,8 @@ import { RootState } from '../store';
 import {
   calculateNewTaskIndex,
   recalculateFilteredTaskIdsByColumn,
+  removeIdFromList,
+  resortFilteredTasks,
 } from '../../utils/taskUtils';
 
 // TODO: Choosing where to create a task: backlog/board
@@ -456,15 +458,14 @@ const tasksSlice = createSlice({
       const { taskId, newStatus, oldStatus, newIndex } = action.payload;
 
       // Remove the taskId from old status ids and filteredIds
-      const updatedOldIds = state[oldStatus].taskIds.filter(
-        (id) => id !== taskId,
-      );
-      const updatedOldFilteredIds = state[oldStatus].filteredTaskIds.filter(
-        (id) => id !== taskId,
-      );
-
-      state[oldStatus].taskIds = updatedOldIds;
-      state[oldStatus].filteredTaskIds = updatedOldFilteredIds;
+      state[oldStatus].taskIds = removeIdFromList({
+        taskIds: state[oldStatus].taskIds,
+        taskIdToRemove: taskId,
+      });
+      state[oldStatus].filteredTaskIds = removeIdFromList({
+        taskIds: state[oldStatus].filteredTaskIds,
+        taskIdToRemove: taskId,
+      });
 
       // Remove the task data from old status data
       const { [taskId]: removedItem, ...remainingOldData } =
@@ -472,30 +473,12 @@ const tasksSlice = createSlice({
 
       state[oldStatus].tasksData = remainingOldData;
 
-      // Recalculate filtered task ids by column
+      // Recalculate old status filtered task ids by column
       state[oldStatus].filteredTaskIdsByColumn =
         recalculateFilteredTaskIdsByColumn({
           state,
           status: oldStatus,
         });
-
-      // Add the taskId to new status ids and filteredIds at the correct newIndex
-      const updatedNewIds = [...state[newStatus].taskIds];
-      updatedNewIds.splice(newIndex, 0, taskId);
-
-      const updatedFilteredNewIds = [
-        ...state[newStatus].filteredTaskIds,
-        taskId,
-      ];
-
-      state[newStatus].taskIds = updatedNewIds;
-
-      state[newStatus].filteredTaskIds = updatedFilteredNewIds.sort((a, b) => {
-        return (
-          state[newStatus].taskIds.indexOf(a) -
-          state[newStatus].taskIds.indexOf(b)
-        );
-      });
 
       // Add the task data to the new status data, updating its status
       state[newStatus].tasksData = {
@@ -503,11 +486,28 @@ const tasksSlice = createSlice({
         [taskId]: { ...removedItem, status: newStatus },
       };
 
-      state[newStatus].filteredTaskIdsByColumn =
-        recalculateFilteredTaskIdsByColumn({
+      // Add the taskId to new status ids
+      state[newStatus].taskIds = state[newStatus].taskIds.splice(
+        newIndex,
+        0,
+        taskId,
+      );
+
+      // Add the taskId to the filtered list to prepare for sorting
+      state[newStatus].filteredTaskIds = [
+        ...state[newStatus].filteredTaskIds,
+        taskId,
+      ];
+
+      // Resort filtered task ids
+      const { sortedFilteredTaskIds, sortedFilteredIdsByColumn } =
+        resortFilteredTasks({
           state,
           status: newStatus,
         });
+
+      state[newStatus].filteredTaskIds = sortedFilteredTaskIds;
+      state[newStatus].filteredTaskIdsByColumn = sortedFilteredIdsByColumn;
     },
     updateTaskPositionLocally: (
       state,
@@ -525,20 +525,14 @@ const tasksSlice = createSlice({
         state[taskStatus].taskIds.splice(currentIndex, 1);
         state[taskStatus].taskIds.splice(newIndex, 0, taskId);
 
-        state[taskStatus].filteredTaskIds = state[
-          taskStatus
-        ].filteredTaskIds.sort((a, b) => {
-          return (
-            state[taskStatus].taskIds.indexOf(a) -
-            state[taskStatus].taskIds.indexOf(b)
-          );
-        });
-
-        state[taskStatus].filteredTaskIdsByColumn =
-          recalculateFilteredTaskIdsByColumn({
+        const { sortedFilteredTaskIds, sortedFilteredIdsByColumn } =
+          resortFilteredTasks({
             state,
             status: taskStatus,
           });
+
+        state[taskStatus].filteredTaskIds = sortedFilteredTaskIds;
+        state[taskStatus].filteredTaskIdsByColumn = sortedFilteredIdsByColumn;
       }
     },
   },

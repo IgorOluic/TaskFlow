@@ -78,3 +78,59 @@ export const recalculateFilteredTaskIdsByColumn = ({
 
   return idsByColumn;
 };
+
+export const resortFilteredTasks = ({
+  state,
+  status,
+}: {
+  state: ITasksState;
+  status: TaskStatus;
+}): {
+  sortedFilteredTaskIds: string[];
+  sortedFilteredIdsByColumn: TaskIdsByColumn;
+} => {
+  const sortedFilteredIdsByColumn: TaskIdsByColumn = {};
+
+  const { taskIds, filteredTaskIds, tasksData } = state[status];
+
+  // Create a map for taskIds to quickly find the index of a task
+  const taskIndexMap = taskIds.reduce(
+    (map, taskId, index) => {
+      map[taskId] = index;
+      return map;
+    },
+    {} as Record<string, number>,
+  );
+
+  // Sort filteredTaskIds based on their position in taskIds
+  const sortedFilteredTaskIds = [...filteredTaskIds].sort(
+    (a, b) => taskIndexMap[a] - taskIndexMap[b],
+  );
+
+  // Group the sorted filtered tasks by their columnId
+  sortedFilteredTaskIds.forEach((taskId) => {
+    const { columnId } = tasksData[taskId];
+    if (!sortedFilteredIdsByColumn[columnId]) {
+      sortedFilteredIdsByColumn[columnId] = [];
+    }
+    sortedFilteredIdsByColumn[columnId].push(taskId);
+  });
+
+  return { sortedFilteredTaskIds, sortedFilteredIdsByColumn };
+};
+
+export const removeIdFromList = ({
+  taskIds,
+  taskIdToRemove,
+}: {
+  taskIds: string[];
+  taskIdToRemove: string;
+}): string[] => {
+  const indexToRemove = taskIds.findIndex((id) => id === taskIdToRemove);
+
+  if (indexToRemove !== -1) {
+    return taskIds;
+  }
+
+  return taskIds.splice(indexToRemove, 1);
+};
