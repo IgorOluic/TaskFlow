@@ -19,11 +19,8 @@ export const selectFilteredTaskIds = (status: TaskStatus) =>
 export const selectTasksDataByStatus = (status: TaskStatus) =>
   createSelector([selectTasksSlice], (tasksSlice) => tasksSlice[status]);
 
-export const selectTaskByStatusAndId = (status: TaskStatus, id: string) =>
-  createSelector(
-    [selectTasksDataByStatus(status)],
-    (tasksByField) => tasksByField.tasksData[id],
-  );
+export const selectTaskById = (id: string) =>
+  createSelector([selectTasksSlice], (tasksSlice) => tasksSlice.tasksData[id]);
 
 export const selectColumnFilteredTaskIds = (
   status: TaskStatus,

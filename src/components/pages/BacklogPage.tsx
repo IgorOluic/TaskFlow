@@ -3,8 +3,7 @@ import { useEffect } from 'react';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { useAppSelector } from '../../hooks/useAppSelector';
 import {
-  fetchBacklogTasks,
-  fetchBoardTasks,
+  fetchTasks,
   reorderTaskPosition,
   updateTaskStatusAndPosition,
 } from '../../redux/tasks/tasksSlice';
@@ -22,8 +21,7 @@ const BacklogPage = () => {
 
   useEffect(() => {
     if (selectedProjectId) {
-      dispatch(fetchBacklogTasks({ projectId: selectedProjectId }));
-      dispatch(fetchBoardTasks({ projectId: selectedProjectId }));
+      dispatch(fetchTasks({ projectId: selectedProjectId }));
     }
   }, [selectedProjectId]);
 

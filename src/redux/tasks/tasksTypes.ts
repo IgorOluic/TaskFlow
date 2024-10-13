@@ -17,13 +17,13 @@ export type ITasksData = Record<string, ITask>;
 export type TaskIdsByColumn = Record<string, string[]>;
 
 export interface TaskStatusData {
-  tasksData: ITasksData;
   taskIds: string[];
   filteredTaskIds: string[];
   filteredTaskIdsByColumn: TaskIdsByColumn;
 }
 
 export interface ITasksState {
+  tasksData: ITasksData;
   backlog: TaskStatusData;
   board: TaskStatusData;
 }

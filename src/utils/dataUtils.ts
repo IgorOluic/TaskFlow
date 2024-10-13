@@ -69,3 +69,57 @@ export const parseTasksData = (
 
   return { data, idsByColumn };
 };
+
+export const parseTasksData2 = (
+  documents: QueryDocumentSnapshot<ITask>[],
+  backlogSortedTaskIds: string[],
+  boardSortedTaskIds: string[],
+): {
+  data: ITasksData;
+  backlogIdsByColumn: TaskIdsByColumn;
+  boardIdsByColumn: TaskIdsByColumn;
+} => {
+  const data: Record<string, ITask> = {};
+
+  const backlogIdsByColumn: TaskIdsByColumn = {};
+  const boardIdsByColumn: TaskIdsByColumn = {};
+
+  const docMap: Map<string, QueryDocumentSnapshot<ITask>> = new Map();
+  documents.forEach((doc) => {
+    docMap.set(doc.id, doc);
+  });
+
+  // Process backlog tasks
+  backlogSortedTaskIds.forEach((taskId) => {
+    const doc = docMap.get(taskId);
+    if (doc) {
+      const taskData = { ...doc.data(), id: taskId };
+      data[taskId] = taskData;
+      const { columnId } = taskData;
+
+      if (!backlogIdsByColumn[columnId]) {
+        backlogIdsByColumn[columnId] = [];
+      }
+
+      backlogIdsByColumn[columnId].push(taskId);
+    }
+  });
+
+  // Process board tasks
+  boardSortedTaskIds.forEach((taskId) => {
+    const doc = docMap.get(taskId);
+    if (doc) {
+      const taskData = { ...doc.data(), id: taskId };
+      data[taskId] = taskData;
+      const { columnId } = taskData;
+
+      if (!boardIdsByColumn[columnId]) {
+        boardIdsByColumn[columnId] = [];
+      }
+
+      boardIdsByColumn[columnId].push(taskId);
+    }
+  });
+
+  return { data, backlogIdsByColumn, boardIdsByColumn };
+};

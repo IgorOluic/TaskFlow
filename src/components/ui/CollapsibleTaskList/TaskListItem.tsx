@@ -6,7 +6,7 @@ import { useAppDispatch } from '../../../hooks/useAppDispatch';
 import { moveTaskToColumn } from '../../../redux/tasks/tasksSlice';
 import TinyAssigneeSelection from '../AssigneeSelection/TinyAssigneeSelection';
 import { useAppSelector } from '../../../hooks/useAppSelector';
-import { selectTaskByStatusAndId } from '../../../redux/tasks/tasksSelectors';
+import { selectTaskById } from '../../../redux/tasks/tasksSelectors';
 import { Draggable } from '@hello-pangea/dnd';
 import { memo } from 'react';
 
@@ -20,7 +20,7 @@ const withDraggable = <P extends object>(
   WrappedComponent: React.ComponentType<P>,
 ) => {
   return ({ taskId, status, index, ...props }: DraggableProps) => {
-    const task = useAppSelector(selectTaskByStatusAndId(status, taskId));
+    const task = useAppSelector(selectTaskById(taskId));
 
     return (
       <Draggable draggableId={taskId} index={index}>
@@ -79,7 +79,6 @@ const TaskListItem = ({ task, status }: TaskListItemProps) => {
           unassigned={!task.assignedTo}
           assigneeId={task.assignedTo}
           taskId={task.id}
-          status={status}
         />
 
         <TaskListItemMenu taskId={task.id} status={task.status} />

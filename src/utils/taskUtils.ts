@@ -58,7 +58,8 @@ export const recalculateFilteredTaskIdsByColumn = ({
   status: TaskStatus;
 }): TaskIdsByColumn => {
   const idsByColumn: TaskIdsByColumn = {};
-  const { filteredTaskIds, tasksData } = state[status];
+  const { tasksData } = state;
+  const { filteredTaskIds } = state[status];
 
   filteredTaskIds.forEach((taskId) => {
     const taskData = tasksData[taskId];
@@ -85,8 +86,8 @@ export const resortFilteredTasks = ({
   sortedFilteredIdsByColumn: TaskIdsByColumn;
 } => {
   const sortedFilteredIdsByColumn: TaskIdsByColumn = {};
-
-  const { taskIds, filteredTaskIds, tasksData } = state[status];
+  const { tasksData } = state;
+  const { taskIds, filteredTaskIds } = state[status];
 
   // Create a map for taskIds to quickly find the index of a task
   const taskIndexMap = taskIds.reduce(

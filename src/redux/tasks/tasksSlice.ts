@@ -12,7 +12,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
 import { ITask, ITasksState, TaskStatus } from './tasksTypes';
-import { parseTasksData } from '../../utils/dataUtils';
+import { parseTasksData, parseTasksData2 } from '../../utils/dataUtils';
 import actions from '../../constants/actions';
 import { RootState } from '../store';
 import {
@@ -167,6 +167,58 @@ export const fetchBoardTasks = createAsyncThunk(
   },
 );
 
+export const fetchTasks = createAsyncThunk(
+  actions.fetchTasks,
+  async ({ projectId }: { projectId: string }, { rejectWithValue }) => {
+    try {
+      const tasksRef = collection(db, `projects/${projectId}/tasks`);
+
+      const tasksQuery = query(tasksRef);
+
+      const querySnapshot = await getDocs(tasksQuery);
+
+      const backlogOrderRef = doc(
+        db,
+        `projects/${projectId}/taskOrders/backlog`,
+      );
+      const boardOrderRef = doc(db, `projects/${projectId}/taskOrders/board`);
+
+      const [backlogOrderSnapshot, boardOrderSnapshot] = await Promise.all([
+        getDoc(backlogOrderRef),
+        getDoc(boardOrderRef),
+      ]);
+
+      let backlogSortedTaskIds: string[] = [];
+      let boardSortedTaskIds: string[] = [];
+
+      if (backlogOrderSnapshot.exists()) {
+        backlogSortedTaskIds = backlogOrderSnapshot.data().taskOrder || [];
+      }
+
+      if (boardOrderSnapshot.exists()) {
+        boardSortedTaskIds = boardOrderSnapshot.data().taskOrder || [];
+      }
+
+      const { data, backlogIdsByColumn, boardIdsByColumn } = parseTasksData2(
+        querySnapshot.docs as QueryDocumentSnapshot<ITask>[],
+        backlogSortedTaskIds,
+        boardSortedTaskIds,
+      );
+
+      return {
+        data,
+        backlogSortedTaskIds,
+        backlogIdsByColumn,
+        boardSortedTaskIds,
+        boardIdsByColumn,
+      };
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      return rejectWithValue('Failed to fetch tasks');
+    }
+  },
+);
+
 export const moveTaskToColumn = createAsyncThunk(
   actions.moveTaskToColumn,
   async (
@@ -200,11 +252,9 @@ export const setTaskAssignee = createAsyncThunk(
     {
       taskId,
       newAssigneeId,
-      taskStatus,
     }: {
       taskId: string;
       newAssigneeId: string | null;
-      taskStatus: TaskStatus;
     },
     { rejectWithValue, getState },
   ) => {
@@ -215,7 +265,7 @@ export const setTaskAssignee = createAsyncThunk(
 
       await updateDoc(taskRef, { assignedTo: newAssigneeId });
 
-      return { taskId, newAssigneeId, taskStatus };
+      return { taskId, newAssigneeId };
     } catch (error) {
       console.error('Error setting task assignee:', error);
       return rejectWithValue('Failed to set task assignee');
@@ -332,14 +382,13 @@ export const updateTaskStatusAndPosition = createAsyncThunk(
 );
 
 const initialState: ITasksState = {
+  tasksData: {},
   backlog: {
-    tasksData: {},
     taskIds: [],
     filteredTaskIds: [],
     filteredTaskIdsByColumn: {},
   },
   board: {
-    tasksData: {},
     taskIds: [],
     filteredTaskIds: [],
     filteredTaskIdsByColumn: {},
@@ -376,7 +425,7 @@ const tasksSlice = createSlice({
         statusesToFilter.forEach((status) => {
           state[status].filteredTaskIds = state[status].taskIds.filter(
             (taskId) => {
-              const task = state[status].tasksData[taskId];
+              const task = state.tasksData[taskId];
               return (
                 task.summary.toLowerCase().includes(searchQuery) ||
                 task.id.toLowerCase().includes(searchQuery)
@@ -405,6 +454,12 @@ const tasksSlice = createSlice({
 
       // TODO: This works for now but needs to be improved/easier to look at
 
+      // Update task status
+      state.tasksData[taskId] = {
+        ...state.tasksData[taskId],
+        status: newStatus,
+      };
+
       // Remove the taskId from old status ids and filteredIds
       const oldTaskIds = state[oldStatus].taskIds;
       const oldFilteredTaskIds = state[oldStatus].filteredTaskIds;
@@ -418,10 +473,6 @@ const tasksSlice = createSlice({
       if (taskIndexInOldFilteredIds !== -1) {
         oldFilteredTaskIds.splice(taskIndexInOldFilteredIds, 1);
       }
-
-      // Remove the task data from old status data
-      const removedTask = state[oldStatus].tasksData[taskId];
-      delete state[oldStatus].tasksData[taskId];
 
       // Only recalculate filteredTaskIdsByColumn if necessary
       if (taskIndexInOldIds !== -1 || taskIndexInOldFilteredIds !== -1) {
@@ -443,12 +494,6 @@ const tasksSlice = createSlice({
       newFilteredTaskIds.sort((a, b) => {
         return newTaskIds.indexOf(a) - newTaskIds.indexOf(b);
       });
-
-      // Add the task data to the new status data, updating its status
-      state[newStatus].tasksData[taskId] = {
-        ...removedTask,
-        status: newStatus,
-      };
 
       // Recalculate filteredTaskIdsByColumn for the new status
       state[newStatus].filteredTaskIdsByColumn =
@@ -485,21 +530,22 @@ const tasksSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(fetchBacklogTasks.fulfilled, (state, action) => {
-      state.backlog.tasksData = action.payload.data;
-      state.backlog.taskIds = action.payload.sortedTaskIds;
-      state.backlog.filteredTaskIds = action.payload.sortedTaskIds;
-      state.backlog.filteredTaskIdsByColumn = action.payload.idsByColumn;
-    });
-    builder.addCase(fetchBoardTasks.fulfilled, (state, action) => {
-      state.board.tasksData = action.payload.data;
-      state.board.taskIds = action.payload.sortedTaskIds;
-      state.board.filteredTaskIds = action.payload.sortedTaskIds;
-      state.board.filteredTaskIdsByColumn = action.payload.idsByColumn;
+    builder.addCase(fetchTasks.fulfilled, (state, action) => {
+      state.tasksData = action.payload.data;
+      state.backlog = {
+        taskIds: action.payload.backlogSortedTaskIds,
+        filteredTaskIds: action.payload.backlogSortedTaskIds,
+        filteredTaskIdsByColumn: action.payload.backlogIdsByColumn,
+      };
+      state.board = {
+        taskIds: action.payload.boardSortedTaskIds,
+        filteredTaskIds: action.payload.boardSortedTaskIds,
+        filteredTaskIdsByColumn: action.payload.boardIdsByColumn,
+      };
     });
     builder.addCase(moveTaskToColumn.fulfilled, (state, action) => {
-      state[action.payload.taskStatus].tasksData[action.payload.taskId] = {
-        ...state[action.payload.taskStatus].tasksData[action.payload.taskId],
+      state.tasksData[action.payload.taskId] = {
+        ...state.tasksData[action.payload.taskId],
         columnId: action.payload.newColumnId,
       };
 
@@ -510,8 +556,8 @@ const tasksSlice = createSlice({
         });
     });
     builder.addCase(setTaskAssignee.fulfilled, (state, action) => {
-      state[action.payload.taskStatus].tasksData[action.payload.taskId] = {
-        ...state[action.payload.taskStatus].tasksData[action.payload.taskId],
+      state.tasksData[action.payload.taskId] = {
+        ...state.tasksData[action.payload.taskId],
         assignedTo: action.payload.newAssigneeId,
       };
     });

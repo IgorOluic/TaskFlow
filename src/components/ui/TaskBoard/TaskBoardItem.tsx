@@ -1,19 +1,16 @@
 import { Box, Flex, HStack, Text, VStack } from '@chakra-ui/react';
 import { useAppSelector } from '../../../hooks/useAppSelector';
-import { selectTaskByStatusAndId } from '../../../redux/tasks/tasksSelectors';
+import { selectTaskById } from '../../../redux/tasks/tasksSelectors';
 import TinyAssigneeSelection from '../AssigneeSelection/TinyAssigneeSelection';
 import { Draggable } from '@hello-pangea/dnd';
 import { memo } from 'react';
-import { TaskStatus } from '../../../redux/tasks/tasksTypes';
 
 interface TaskBoardItemProps {
   taskId: string;
 }
 
 const TaskBoardItem = ({ taskId }: TaskBoardItemProps) => {
-  const task = useAppSelector(
-    selectTaskByStatusAndId(TaskStatus.board, taskId),
-  );
+  const task = useAppSelector(selectTaskById(taskId));
 
   return (
     <VStack w="full">
@@ -26,11 +23,7 @@ const TaskBoardItem = ({ taskId }: TaskBoardItemProps) => {
           {task.id}
         </Text>
 
-        <TinyAssigneeSelection
-          taskId={task.id}
-          assigneeId={task.assignedTo}
-          status={TaskStatus.board}
-        />
+        <TinyAssigneeSelection taskId={task.id} assigneeId={task.assignedTo} />
       </HStack>
     </VStack>
   );
