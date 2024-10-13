@@ -57,11 +57,14 @@ const BacklogPage = () => {
         }),
       );
     } else {
+      const isMovingDown = destination.index > source.index;
+
       dispatch(
         reorderTaskPosition({
           taskId: draggableId,
           droppedAtIndex: destination.index,
           taskStatus,
+          isMovingDown,
         }),
       );
     }

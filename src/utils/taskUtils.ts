@@ -1,4 +1,3 @@
-import { RootState } from '../redux/store';
 import {
   ITasksState,
   TaskIdsByColumn,
@@ -12,18 +11,17 @@ import {
 // it should only place it right before the next item
 
 export const calculateNewTaskIndex = ({
-  state,
-  taskStatus,
+  filteredTaskIds,
+  allTaskIds,
   droppedAtIndex,
+  isMovingDown = false,
 }: {
-  state: RootState;
-  taskStatus: TaskStatus;
+  filteredTaskIds: string[];
+  allTaskIds: string[];
   droppedAtIndex: number;
+  isMovingDown?: boolean;
 }) => {
-  const filteredTaskIds = state.tasks[taskStatus].filteredTaskIds;
-  const allTaskIds = state.tasks[taskStatus].taskIds;
-
-  // Case when inserting to the beggining of the list
+  // If moving to the beginning
   if (droppedAtIndex === 0) {
     // Try to get the ID of the next item in the filtered list
     const nextId = filteredTaskIds[droppedAtIndex];
@@ -40,19 +38,16 @@ export const calculateNewTaskIndex = ({
     return allTaskIds.length;
   }
 
-  // In all other cases there should be a previous item
-  const previousId = filteredTaskIds[droppedAtIndex - 1];
+  // Find the ID of the previous item in the filtered list
+  // Adjust the index since the item is temporarily removed from its original spot
+  const previousItemId =
+    filteredTaskIds[droppedAtIndex - (isMovingDown ? 0 : 1)];
 
-  if (previousId) {
-    const indexOfPreviousItem = allTaskIds.findIndex(
-      (item) => item === previousId,
-    );
+  const globalIndexOfPreviousItem = allTaskIds.findIndex(
+    (item) => item === previousItemId,
+  );
 
-    return indexOfPreviousItem + 1;
-  }
-
-  // Add this as a safety measure
-  return allTaskIds.length;
+  return globalIndexOfPreviousItem + (isMovingDown ? 0 : 1);
 };
 
 export const recalculateFilteredTaskIdsByColumn = ({
@@ -117,20 +112,4 @@ export const resortFilteredTasks = ({
   });
 
   return { sortedFilteredTaskIds, sortedFilteredIdsByColumn };
-};
-
-export const removeIdFromList = ({
-  taskIds,
-  taskIdToRemove,
-}: {
-  taskIds: string[];
-  taskIdToRemove: string;
-}): string[] => {
-  const indexToRemove = taskIds.findIndex((id) => id === taskIdToRemove);
-
-  if (indexToRemove !== -1) {
-    return taskIds;
-  }
-
-  return taskIds.splice(indexToRemove, 1);
 };

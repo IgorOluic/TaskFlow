@@ -18,7 +18,6 @@ import { RootState } from '../store';
 import {
   calculateNewTaskIndex,
   recalculateFilteredTaskIdsByColumn,
-  removeIdFromList,
   resortFilteredTasks,
 } from '../../utils/taskUtils';
 import taskServices from '../../services/taskServices';
@@ -231,10 +230,12 @@ export const reorderTaskPosition = createAsyncThunk(
       taskId,
       droppedAtIndex,
       taskStatus,
+      isMovingDown,
     }: {
       taskId: string;
       droppedAtIndex: number;
       taskStatus: TaskStatus;
+      isMovingDown: boolean;
     },
     { rejectWithValue, getState, dispatch },
   ) => {
@@ -242,9 +243,10 @@ export const reorderTaskPosition = createAsyncThunk(
       const state = getState() as RootState;
 
       const newIndex = calculateNewTaskIndex({
-        state,
-        taskStatus,
+        filteredTaskIds: state.tasks[taskStatus].filteredTaskIds,
+        allTaskIds: state.tasks[taskStatus].taskIds,
         droppedAtIndex,
+        isMovingDown,
       });
 
       dispatch(
@@ -261,14 +263,11 @@ export const reorderTaskPosition = createAsyncThunk(
         throw new Error('Project ID not found.');
       }
 
-      await runTransaction(db, async (transaction) => {
-        taskServices.reorderTaskPosition({
-          projectId,
-          taskId,
-          newIndex,
-          taskStatus,
-          transaction,
-        });
+      await taskServices.reorderTaskPosition({
+        projectId,
+        taskId,
+        newIndex,
+        taskStatus,
       });
     } catch (error) {
       console.error('Error updating task position:', error);
@@ -297,9 +296,10 @@ export const updateTaskStatusAndPosition = createAsyncThunk(
       const state = getState() as RootState;
 
       const newIndex = calculateNewTaskIndex({
-        state,
+        filteredTaskIds: state.tasks[newStatus].filteredTaskIds,
+        allTaskIds: state.tasks[newStatus].taskIds,
         droppedAtIndex,
-        taskStatus: newStatus,
+        isMovingDown: false,
       });
 
       dispatch(
@@ -317,28 +317,12 @@ export const updateTaskStatusAndPosition = createAsyncThunk(
         throw new Error('Project ID not found.');
       }
 
-      await runTransaction(db, async (transaction) => {
-        taskServices.removeTaskFromOrder({
-          projectId,
-          taskStatus: oldStatus,
-          taskId,
-          transaction,
-        });
-
-        taskServices.addTaskToOrder({
-          projectId,
-          taskStatus: newStatus,
-          taskId,
-          transaction,
-          newIndex,
-        });
-
-        taskServices.updateTaskStatus({
-          projectId,
-          taskId,
-          newStatus,
-          transaction,
-        });
+      await taskServices.updateTaskStatusAndPosition({
+        projectId,
+        taskId,
+        oldStatus: oldStatus,
+        newStatus: newStatus,
+        newIndex,
       });
     } catch (error) {
       console.error('Error updating task status and position:', error);
@@ -419,57 +403,59 @@ const tasksSlice = createSlice({
     ) => {
       const { taskId, newStatus, oldStatus, newIndex } = action.payload;
 
+      // TODO: This works for now but needs to be improved/easier to look at
+
       // Remove the taskId from old status ids and filteredIds
-      state[oldStatus].taskIds = removeIdFromList({
-        taskIds: state[oldStatus].taskIds,
-        taskIdToRemove: taskId,
-      });
-      state[oldStatus].filteredTaskIds = removeIdFromList({
-        taskIds: state[oldStatus].filteredTaskIds,
-        taskIdToRemove: taskId,
-      });
+      const oldTaskIds = state[oldStatus].taskIds;
+      const oldFilteredTaskIds = state[oldStatus].filteredTaskIds;
+
+      const taskIndexInOldIds = oldTaskIds.indexOf(taskId);
+      if (taskIndexInOldIds !== -1) {
+        oldTaskIds.splice(taskIndexInOldIds, 1);
+      }
+
+      const taskIndexInOldFilteredIds = oldFilteredTaskIds.indexOf(taskId);
+      if (taskIndexInOldFilteredIds !== -1) {
+        oldFilteredTaskIds.splice(taskIndexInOldFilteredIds, 1);
+      }
 
       // Remove the task data from old status data
-      const { [taskId]: removedItem, ...remainingOldData } =
-        state[oldStatus].tasksData;
+      const removedTask = state[oldStatus].tasksData[taskId];
+      delete state[oldStatus].tasksData[taskId];
 
-      state[oldStatus].tasksData = remainingOldData;
+      // Only recalculate filteredTaskIdsByColumn if necessary
+      if (taskIndexInOldIds !== -1 || taskIndexInOldFilteredIds !== -1) {
+        state[oldStatus].filteredTaskIdsByColumn =
+          recalculateFilteredTaskIdsByColumn({
+            state,
+            status: oldStatus,
+          });
+      }
 
-      // Recalculate old status filtered task ids by column
-      state[oldStatus].filteredTaskIdsByColumn =
-        recalculateFilteredTaskIdsByColumn({
-          state,
-          status: oldStatus,
-        });
+      // Add the taskId to new status ids and filteredIds at the correct newIndex
+      const newTaskIds = state[newStatus].taskIds;
+      newTaskIds.splice(newIndex, 0, taskId); // Modify array in place
+
+      const newFilteredTaskIds = state[newStatus].filteredTaskIds;
+      newFilteredTaskIds.push(taskId); // Add taskId to filtered list
+
+      // Sort filteredTaskIds by their position in taskIds array
+      newFilteredTaskIds.sort((a, b) => {
+        return newTaskIds.indexOf(a) - newTaskIds.indexOf(b);
+      });
 
       // Add the task data to the new status data, updating its status
-      state[newStatus].tasksData = {
-        ...state[newStatus].tasksData,
-        [taskId]: { ...removedItem, status: newStatus },
+      state[newStatus].tasksData[taskId] = {
+        ...removedTask,
+        status: newStatus,
       };
 
-      // Add the taskId to new status ids
-      state[newStatus].taskIds = state[newStatus].taskIds.splice(
-        newIndex,
-        0,
-        taskId,
-      );
-
-      // Add the taskId to the filtered list to prepare for sorting
-      state[newStatus].filteredTaskIds = [
-        ...state[newStatus].filteredTaskIds,
-        taskId,
-      ];
-
-      // Resort filtered task ids
-      const { sortedFilteredTaskIds, sortedFilteredIdsByColumn } =
-        resortFilteredTasks({
+      // Recalculate filteredTaskIdsByColumn for the new status
+      state[newStatus].filteredTaskIdsByColumn =
+        recalculateFilteredTaskIdsByColumn({
           state,
           status: newStatus,
         });
-
-      state[newStatus].filteredTaskIds = sortedFilteredTaskIds;
-      state[newStatus].filteredTaskIdsByColumn = sortedFilteredIdsByColumn;
     },
     reorderTaskPositionLocally: (
       state,
