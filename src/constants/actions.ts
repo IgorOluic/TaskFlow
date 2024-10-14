@@ -22,6 +22,8 @@ export default {
   moveTaskToColumn: 'tasks/moveTaskToColumn',
   setTaskAssignee: 'tasks/setTaskAssignee',
   updateTaskPosition: 'tasks/updateTaskPosition',
+  reorderTaskPositionInColumn: 'tasks/reorderTaskPositionInColumn',
+  updateTaskColumnAndPosition: 'tasks/updateTaskColumnAndPosition',
 
   // invitations
   fetchInvitations: 'invitations/fetchInvitations',

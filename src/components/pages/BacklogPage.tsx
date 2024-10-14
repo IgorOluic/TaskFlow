@@ -1,9 +1,6 @@
 import { Divider, VStack } from '@chakra-ui/react';
-import { useEffect } from 'react';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
-import { useAppSelector } from '../../hooks/useAppSelector';
 import {
-  fetchTasks,
   reorderTaskPosition,
   updateTaskStatusAndPosition,
 } from '../../redux/tasks/tasksSlice';
@@ -15,15 +12,6 @@ import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 
 const BacklogPage = () => {
   const dispatch = useAppDispatch();
-  const selectedProjectId = useAppSelector(
-    (state) => state.projects.selectedProjectId,
-  );
-
-  useEffect(() => {
-    if (selectedProjectId) {
-      dispatch(fetchTasks({ projectId: selectedProjectId }));
-    }
-  }, [selectedProjectId]);
 
   const onDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;

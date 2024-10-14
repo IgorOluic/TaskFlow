@@ -19,6 +19,7 @@ export type TaskIdsByColumn = Record<string, string[]>;
 export interface TaskStatusData {
   taskIds: string[];
   filteredTaskIds: string[];
+  taskIdsByColumn: TaskIdsByColumn;
   filteredTaskIdsByColumn: TaskIdsByColumn;
 }
 

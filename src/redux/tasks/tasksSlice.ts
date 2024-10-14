@@ -17,6 +17,7 @@ import actions from '../../constants/actions';
 import { RootState } from '../store';
 import {
   calculateNewTaskIndex,
+  calculateNewTaskIndexInColumns,
   recalculateFilteredTaskIdsByColumn,
   resortFilteredTasks,
 } from '../../utils/taskUtils';
@@ -326,6 +327,135 @@ export const reorderTaskPosition = createAsyncThunk(
   },
 );
 
+export const reorderTaskPositionInColumn = createAsyncThunk(
+  actions.reorderTaskPositionInColumn,
+  async (
+    {
+      taskId,
+      droppedAtIndex,
+      taskStatus,
+      isMovingDown = false,
+      columnId,
+    }: {
+      taskId: string;
+      droppedAtIndex: number;
+      taskStatus: TaskStatus;
+      isMovingDown?: boolean;
+      columnId: string;
+    },
+    { rejectWithValue, getState, dispatch },
+  ) => {
+    try {
+      const state = getState() as RootState;
+
+      const newIndex = calculateNewTaskIndexInColumns({
+        allTaskIdsByColumn: state.tasks[taskStatus].taskIdsByColumn,
+        filteredTaskIdsByColumn:
+          state.tasks[taskStatus].filteredTaskIdsByColumn,
+        allTaskIds: state.tasks[taskStatus].taskIds,
+        droppedAtIndex,
+        isMovingDown,
+        columnId,
+      });
+
+      if (newIndex !== null) {
+        dispatch(
+          reorderTaskPositionLocally({
+            taskId,
+            newIndex: newIndex,
+            taskStatus,
+          }),
+        );
+
+        const projectId = state.projects.selectedProjectId;
+
+        if (!projectId) {
+          throw new Error('Project ID not found.');
+        }
+
+        await taskServices.reorderTaskPosition({
+          projectId,
+          taskId,
+          newIndex,
+          taskStatus,
+        });
+      }
+    } catch (error) {
+      console.error('Error updating task position:', error);
+      return rejectWithValue('Failed to update task position');
+    }
+  },
+);
+
+export const updateTaskColumnAndPosition = createAsyncThunk(
+  actions.updateTaskColumnAndPosition,
+  async (
+    {
+      taskId,
+      droppedAtIndex,
+      taskStatus,
+      isMovingDown = false,
+      oldColumnId,
+      newColumnId,
+    }: {
+      taskId: string;
+      droppedAtIndex: number;
+      taskStatus: TaskStatus;
+      isMovingDown?: boolean;
+      oldColumnId: string;
+      newColumnId: string;
+    },
+    { rejectWithValue, getState, dispatch },
+  ) => {
+    try {
+      const state = getState() as RootState;
+
+      const newIndex = calculateNewTaskIndexInColumns({
+        allTaskIdsByColumn: state.tasks[taskStatus].taskIdsByColumn,
+        filteredTaskIdsByColumn:
+          state.tasks[taskStatus].filteredTaskIdsByColumn,
+        allTaskIds: state.tasks[taskStatus].taskIds,
+        droppedAtIndex,
+        isMovingDown,
+        columnId: newColumnId,
+      });
+
+      dispatch(
+        updateTaskColumnAndPositionLocally({
+          taskId,
+          newIndex,
+          taskStatus,
+          oldColumnId,
+          newColumnId,
+        }),
+      );
+      const projectId = state.projects.selectedProjectId;
+      if (!projectId) {
+        throw new Error('Project ID not found.');
+      }
+
+      if (newIndex === null) {
+        await taskServices.updateTaskColumn({
+          projectId,
+          taskId,
+          columnId: newColumnId,
+        });
+      } else {
+        await taskServices.updateTaskColumnAndPosition({
+          projectId,
+          taskId,
+          newIndex,
+          taskStatus,
+          columnId: newColumnId,
+        });
+      }
+    } catch (error) {
+      console.error('Error updating task position:', error);
+      return rejectWithValue('Failed to update task position');
+    }
+  },
+);
+
 export const updateTaskStatusAndPosition = createAsyncThunk(
   actions.updateTaskStatusAndPosition,
   async (
@@ -386,11 +516,13 @@ const initialState: ITasksState = {
   backlog: {
     taskIds: [],
     filteredTaskIds: [],
+    taskIdsByColumn: {},
     filteredTaskIdsByColumn: {},
   },
   board: {
     taskIds: [],
     filteredTaskIds: [],
+    taskIdsByColumn: {},
     filteredTaskIdsByColumn: {},
   },
 };
@@ -502,6 +634,53 @@ const tasksSlice = createSlice({
           status: newStatus,
         });
     },
+    updateTaskColumnAndPositionLocally: (
+      state,
+      action: PayloadAction<{
+        taskId: string;
+        taskStatus: TaskStatus;
+        newIndex: number | null;
+        oldColumnId: string;
+        newColumnId: string;
+      }>,
+    ) => {
+      const { taskId, newIndex, taskStatus, newColumnId } = action.payload;
+
+      // Update task column
+      state.tasksData[taskId] = {
+        ...state.tasksData[taskId],
+        columnId: newColumnId,
+      };
+
+      const currentIndex = state[taskStatus].taskIds.indexOf(taskId);
+
+      if (currentIndex !== -1) {
+        // If new index is null, we don't need to update it's position
+        if (newIndex !== null) {
+          const updatedTaskIds = [
+            ...state[taskStatus].taskIds.slice(0, currentIndex),
+            ...state[taskStatus].taskIds.slice(currentIndex + 1),
+          ];
+
+          // Adjust the newIndex if the item was moved to a larger unfiltered index
+          const adjustedNewIndex =
+            newIndex > currentIndex ? newIndex - 1 : newIndex;
+
+          // Insert the taskId at the adjusted newIndex
+          updatedTaskIds.splice(adjustedNewIndex, 0, taskId);
+          state[taskStatus].taskIds = updatedTaskIds;
+        }
+
+        const { sortedFilteredTaskIds, sortedFilteredIdsByColumn } =
+          resortFilteredTasks({
+            state,
+            status: taskStatus,
+          });
+
+        state[taskStatus].filteredTaskIds = sortedFilteredTaskIds;
+        state[taskStatus].filteredTaskIdsByColumn = sortedFilteredIdsByColumn;
+      }
+    },
     reorderTaskPositionLocally: (
       state,
       action: PayloadAction<{
@@ -535,11 +714,13 @@ const tasksSlice = createSlice({
       state.backlog = {
         taskIds: action.payload.backlogSortedTaskIds,
         filteredTaskIds: action.payload.backlogSortedTaskIds,
+        taskIdsByColumn: action.payload.backlogIdsByColumn,
         filteredTaskIdsByColumn: action.payload.backlogIdsByColumn,
       };
       state.board = {
         taskIds: action.payload.boardSortedTaskIds,
         filteredTaskIds: action.payload.boardSortedTaskIds,
+        taskIdsByColumn: action.payload.boardIdsByColumn,
         filteredTaskIdsByColumn: action.payload.boardIdsByColumn,
       };
     });
@@ -566,6 +747,7 @@ const tasksSlice = createSlice({
 
 export const {
   updateTaskStatusAndPositionLocally,
+  updateTaskColumnAndPositionLocally,
   reorderTaskPositionLocally,
   filterTasks,
 } = tasksSlice.actions;

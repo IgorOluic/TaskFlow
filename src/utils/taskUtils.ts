@@ -50,6 +50,61 @@ export const calculateNewTaskIndex = ({
   return globalIndexOfPreviousItem + (isMovingDown ? 0 : 1);
 };
 
+export const calculateNewTaskIndexInColumns = ({
+  filteredTaskIdsByColumn,
+  allTaskIdsByColumn,
+  allTaskIds,
+  droppedAtIndex,
+  isMovingDown = false,
+  columnId,
+}: {
+  filteredTaskIdsByColumn: TaskIdsByColumn;
+  allTaskIdsByColumn: TaskIdsByColumn;
+  allTaskIds: string[];
+  droppedAtIndex: number;
+  isMovingDown?: boolean;
+  columnId: string;
+}) => {
+  // If moving to the beginning
+  if (droppedAtIndex === 0) {
+    if (filteredTaskIdsByColumn[columnId]) {
+      // Try to get the ID of the next item in the filtered column list
+      const nextId = filteredTaskIdsByColumn[columnId][droppedAtIndex];
+
+      if (nextId) {
+        // If we find the ID of the next item in the filtered list, we get its index from the unfiltered list
+        const indexOfNextItem = allTaskIds.findIndex((item) => item === nextId);
+        return indexOfNextItem;
+      }
+    }
+
+    // If there is no next item, try to find the last item from the columns unfiltered list
+    if (allTaskIdsByColumn[columnId]) {
+      const lastIdInColumn =
+        allTaskIdsByColumn[columnId][allTaskIdsByColumn[columnId].length - 1];
+
+      if (lastIdInColumn) {
+        const indexOfLastItem = allTaskIds.findIndex(
+          (item) => item === lastIdInColumn,
+        );
+        return indexOfLastItem + 1;
+      }
+    }
+
+    // If there are no items at all in this column, we shouldn't change index at all
+    return null;
+  }
+
+  const previousItemId =
+    filteredTaskIdsByColumn[columnId][droppedAtIndex - (isMovingDown ? 0 : 1)];
+
+  const globalIndexOfPreviousItem = allTaskIds.findIndex(
+    (item) => item === previousItemId,
+  );
+
+  return globalIndexOfPreviousItem + (isMovingDown ? 0 : 1);
+};
+
 export const recalculateFilteredTaskIdsByColumn = ({
   state,
   status,

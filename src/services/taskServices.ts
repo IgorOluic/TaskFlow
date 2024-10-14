@@ -1,4 +1,4 @@
-import { doc, runTransaction } from 'firebase/firestore';
+import { doc, runTransaction, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { TaskStatus } from '../redux/tasks/tasksTypes';
 
@@ -100,7 +100,69 @@ const updateTaskStatusAndPosition = async ({
   });
 };
 
+const updateTaskColumn = async ({
+  taskId,
+  projectId,
+  columnId,
+}: {
+  taskId: string;
+  projectId: string;
+  columnId: string;
+}) => {
+  const taskRef = doc(db, `projects/${projectId}/tasks/${taskId}`);
+
+  await updateDoc(taskRef, {
+    columnId: columnId,
+  });
+};
+
+const updateTaskColumnAndPosition = async ({
+  projectId,
+  taskStatus,
+  newIndex,
+  taskId,
+  columnId,
+}: {
+  projectId: string;
+  taskStatus: TaskStatus;
+  newIndex: number;
+  taskId: string;
+  columnId: string;
+}) => {
+  const taskRef = doc(db, `projects/${projectId}/tasks/${taskId}`);
+  const taskOrderRef = doc(
+    db,
+    `projects/${projectId}/taskOrders/${taskStatus}`,
+  );
+
+  await runTransaction(db, async (transaction) => {
+    const taskOrderDoc = await transaction.get(taskOrderRef);
+
+    if (!taskOrderDoc.exists()) {
+      throw new Error('Task order document does not exist');
+    }
+
+    const taskOrder = taskOrderDoc.data().taskOrder as string[];
+
+    const currentIndex = taskOrder.indexOf(taskId);
+
+    if (currentIndex === -1) {
+      throw new Error('Task ID not found in task order');
+    }
+
+    taskOrder.splice(currentIndex, 1);
+    taskOrder.splice(newIndex, 0, taskId);
+
+    transaction.update(taskOrderRef, { taskOrder });
+    transaction.update(taskRef, {
+      columnId: columnId,
+    });
+  });
+};
+
 export default {
   reorderTaskPosition,
   updateTaskStatusAndPosition,
+  updateTaskColumn,
+  updateTaskColumnAndPosition,
 };
