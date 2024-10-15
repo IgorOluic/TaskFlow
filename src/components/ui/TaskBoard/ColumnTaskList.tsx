@@ -1,15 +1,18 @@
 import { VStack } from '@chakra-ui/react';
 import { useAppSelector } from '../../../hooks/useAppSelector';
-import { selectBoardTasksByColumnId } from '../../../redux/tasks/tasksSelectors';
+import { selectColumnFilteredTaskIds } from '../../../redux/tasks/tasksSelectors';
 import TaskBoardItem from './TaskBoardItem';
 import { Droppable } from '@hello-pangea/dnd';
+import { TaskStatus } from '../../../redux/tasks/tasksTypes';
 
 interface ColumnTaskListProps {
   columnId: string;
 }
 
 const ColumnTaskList = ({ columnId }: ColumnTaskListProps) => {
-  const columnTaskIds = useAppSelector(selectBoardTasksByColumnId(columnId));
+  const columnTaskIds = useAppSelector(
+    selectColumnFilteredTaskIds(TaskStatus.board, columnId),
+  );
 
   const renderTaskItem = (taskId: string, index: number): JSX.Element => {
     return <TaskBoardItem key={taskId} taskId={taskId} index={index} />;

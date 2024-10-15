@@ -6,19 +6,16 @@ import AssigneeSelection from '.';
 import { useAppSelector } from '../../../hooks/useAppSelector';
 import { selectMemberById } from '../../../redux/members/membersSelectors';
 import { setTaskAssignee } from '../../../redux/tasks/tasksSlice';
-import { TaskStatusDataFields } from '../../../redux/tasks/tasksTypes';
 import useVisibilityControl from '../../../hooks/useVisibilityControl';
 
 interface TinyAssigneeSelectionProps extends UserAvatarProps {
   taskId: string;
   assigneeId: string | null;
-  dataField: TaskStatusDataFields;
 }
 
 const TinyAssigneeSelection = ({
   taskId,
   assigneeId,
-  dataField,
   ...props
 }: TinyAssigneeSelectionProps) => {
   const dispatch = useAppDispatch();
@@ -29,7 +26,7 @@ const TinyAssigneeSelection = ({
   useOutsideClick({ ref, handler: onClose });
 
   const onAssigneeChange = (memberId: string | null) => {
-    dispatch(setTaskAssignee({ taskId, newAssigneeId: memberId, dataField }));
+    dispatch(setTaskAssignee({ taskId, newAssigneeId: memberId }));
     onClose();
   };
 

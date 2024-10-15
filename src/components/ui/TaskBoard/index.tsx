@@ -3,8 +3,15 @@ import TaskBoardColumn from './TaskBoardColumn';
 import { useAppSelector } from '../../../hooks/useAppSelector';
 import { selectColumnIds } from '../../../redux/columns/columnsSelectors';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import { useAppDispatch } from '../../../hooks/useAppDispatch';
+import {
+  reorderTaskPositionInColumn,
+  updateTaskColumnAndPosition,
+} from '../../../redux/tasks/tasksSlice';
+import { TaskStatus } from '../../../redux/tasks/tasksTypes';
 
 const TaskBoard = () => {
+  const dispatch = useAppDispatch();
   const columnIds = useAppSelector(selectColumnIds);
 
   const renderColumnItem = (columnId: string, index: number): JSX.Element => {
@@ -20,12 +27,27 @@ const TaskBoard = () => {
       return;
     }
 
-    console.log(destination, source, draggableId);
-
     if (isSameColumn) {
-      // TODO: update task position when moving in the same column
+      const isMovingDown = destination.index > source.index;
+
+      dispatch(
+        reorderTaskPositionInColumn({
+          taskId: draggableId,
+          droppedAtIndex: destination.index,
+          taskStatus: TaskStatus.board,
+          isMovingDown,
+          columnId: destination.droppableId,
+        }),
+      );
     } else {
-      // TODO: update task position when moving to a different column
+      dispatch(
+        updateTaskColumnAndPosition({
+          taskId: draggableId,
+          droppedAtIndex: destination.index,
+          taskStatus: TaskStatus.board,
+          newColumnId: destination.droppableId,
+        }),
+      );
     }
   };
 

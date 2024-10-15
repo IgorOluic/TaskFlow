@@ -1,26 +1,26 @@
 import { VStack, HStack, Text } from '@chakra-ui/react';
 import ColumnDropdown from '../ColumnDropdown';
-import { ITask, TaskStatusDataFields } from '../../../redux/tasks/tasksTypes';
+import { ITask, TaskStatus } from '../../../redux/tasks/tasksTypes';
 import TaskListItemMenu from './TaskListItemMenu';
 import { useAppDispatch } from '../../../hooks/useAppDispatch';
 import { moveTaskToColumn } from '../../../redux/tasks/tasksSlice';
 import TinyAssigneeSelection from '../AssigneeSelection/TinyAssigneeSelection';
 import { useAppSelector } from '../../../hooks/useAppSelector';
-import { selectTaskByIdAndField } from '../../../redux/tasks/tasksSelectors';
+import { selectTaskById } from '../../../redux/tasks/tasksSelectors';
 import { Draggable } from '@hello-pangea/dnd';
 import { memo } from 'react';
 
 interface DraggableProps {
   taskId: string;
-  dataField: TaskStatusDataFields;
+  status: TaskStatus;
   index: number;
 }
 
 const withDraggable = <P extends object>(
   WrappedComponent: React.ComponentType<P>,
 ) => {
-  return ({ taskId, dataField, index, ...props }: DraggableProps) => {
-    const task = useAppSelector(selectTaskByIdAndField(dataField, taskId));
+  return ({ taskId, status, index, ...props }: DraggableProps) => {
+    const task = useAppSelector(selectTaskById(taskId));
 
     return (
       <Draggable draggableId={taskId} index={index}>
@@ -35,11 +35,7 @@ const withDraggable = <P extends object>(
             borderBottomColor="gray.300"
             data-extra-info="asd"
           >
-            <WrappedComponent
-              task={task}
-              dataField={dataField}
-              {...(props as P)}
-            />
+            <WrappedComponent task={task} status={status} {...(props as P)} />
           </VStack>
         )}
       </Draggable>
@@ -49,14 +45,16 @@ const withDraggable = <P extends object>(
 
 interface TaskListItemProps {
   task: ITask;
-  dataField: TaskStatusDataFields;
+  status: TaskStatus;
 }
 
-const TaskListItem = ({ task, dataField }: TaskListItemProps) => {
+const TaskListItem = ({ task, status }: TaskListItemProps) => {
   const dispatch = useAppDispatch();
 
   const onColumnChange = (newColumnId: string) => {
-    dispatch(moveTaskToColumn({ taskId: task.id, newColumnId, dataField }));
+    dispatch(
+      moveTaskToColumn({ taskId: task.id, newColumnId, taskStatus: status }),
+    );
   };
 
   return (
@@ -81,7 +79,6 @@ const TaskListItem = ({ task, dataField }: TaskListItemProps) => {
           unassigned={!task.assignedTo}
           assigneeId={task.assignedTo}
           taskId={task.id}
-          dataField={dataField}
         />
 
         <TaskListItemMenu taskId={task.id} status={task.status} />

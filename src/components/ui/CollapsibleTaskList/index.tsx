@@ -4,6 +4,7 @@ import { TaskStatus } from '../../../redux/tasks/tasksTypes';
 import TaskList from './TaskList';
 import useVisibilityControl from '../../../hooks/useVisibilityControl';
 import TaskCount from './TaskCount';
+import TaskCountPerColumn from './TaskCountPerColumn';
 
 interface CollapsibleTaskListProps {
   title: string;
@@ -25,16 +26,21 @@ const CollapsibleTaskList = ({ title, status }: CollapsibleTaskListProps) => {
     >
       <HStack
         w="full"
-        onClick={onToggle}
-        cursor="pointer"
         py={2}
         px={2}
         alignItems="center"
+        cursor="pointer"
+        onClick={onToggle}
+        justifyContent="space-between"
       >
-        <SvgIcon name="chevronDown" width="12px" height="12px" />
-        <Text fontSize={14} fontWeight={600}>
-          {title} <TaskCount status={status} />
-        </Text>
+        <HStack w="full" alignItems="center">
+          <SvgIcon name="chevronDown" width="12px" height="12px" />
+          <Text fontSize={14} fontWeight={600}>
+            {title} <TaskCount status={status} />
+          </Text>
+        </HStack>
+
+        <TaskCountPerColumn status={status} />
       </HStack>
 
       {isOpen && <TaskList status={status} />}

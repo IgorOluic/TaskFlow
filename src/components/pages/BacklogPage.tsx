@@ -1,11 +1,7 @@
 import { Divider, VStack } from '@chakra-ui/react';
-import { useEffect } from 'react';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
-import { useAppSelector } from '../../hooks/useAppSelector';
 import {
-  fetchBacklogTasks,
-  fetchBoardTasks,
-  updateTaskPosition,
+  reorderTaskPosition,
   updateTaskStatusAndPosition,
 } from '../../redux/tasks/tasksSlice';
 import CollapsibleTaskList from '../ui/CollapsibleTaskList';
@@ -16,16 +12,6 @@ import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 
 const BacklogPage = () => {
   const dispatch = useAppDispatch();
-  const selectedProjectId = useAppSelector(
-    (state) => state.projects.selectedProjectId,
-  );
-
-  useEffect(() => {
-    if (selectedProjectId) {
-      dispatch(fetchBacklogTasks({ projectId: selectedProjectId }));
-      dispatch(fetchBoardTasks({ projectId: selectedProjectId }));
-    }
-  }, [selectedProjectId]);
 
   const onDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
@@ -57,11 +43,14 @@ const BacklogPage = () => {
         }),
       );
     } else {
+      const isMovingDown = destination.index > source.index;
+
       dispatch(
-        updateTaskPosition({
+        reorderTaskPosition({
           taskId: draggableId,
           droppedAtIndex: destination.index,
           taskStatus,
+          isMovingDown,
         }),
       );
     }
