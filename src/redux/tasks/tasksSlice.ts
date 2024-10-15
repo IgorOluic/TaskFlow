@@ -18,8 +18,9 @@ import { RootState } from '../store';
 import {
   calculateNewTaskIndex,
   calculateNewTaskIndexInColumns,
-  recalculateFilteredTaskIdsByColumn,
-  resortFilteredTasks,
+  insertTaskAtIndex,
+  removeTaskFromList,
+  resortTasks,
 } from '../../utils/taskUtils';
 import taskServices from '../../services/taskServices';
 
@@ -395,14 +396,12 @@ export const updateTaskColumnAndPosition = createAsyncThunk(
       droppedAtIndex,
       taskStatus,
       isMovingDown = false,
-      oldColumnId,
       newColumnId,
     }: {
       taskId: string;
       droppedAtIndex: number;
       taskStatus: TaskStatus;
       isMovingDown?: boolean;
-      oldColumnId: string;
       newColumnId: string;
     },
     { rejectWithValue, getState, dispatch },
@@ -425,7 +424,6 @@ export const updateTaskColumnAndPosition = createAsyncThunk(
           taskId,
           newIndex,
           taskStatus,
-          oldColumnId,
           newColumnId,
         }),
       );
@@ -545,11 +543,7 @@ const tasksSlice = createSlice({
         // needs to be updated when user filters are implemented
         statusesToFilter.forEach((status) => {
           state[status].filteredTaskIds = state[status].taskIds;
-          state[status].filteredTaskIdsByColumn =
-            recalculateFilteredTaskIdsByColumn({
-              state,
-              status,
-            });
+          resortTasks({ state, taskStatus: status });
         });
       } else {
         const searchQuery = search.toLowerCase();
@@ -565,11 +559,7 @@ const tasksSlice = createSlice({
             },
           );
 
-          state[status].filteredTaskIdsByColumn =
-            recalculateFilteredTaskIdsByColumn({
-              state,
-              status,
-            });
+          resortTasks({ state, taskStatus: status });
         });
       }
     },
@@ -584,55 +574,30 @@ const tasksSlice = createSlice({
     ) => {
       const { taskId, newStatus, oldStatus, newIndex } = action.payload;
 
-      // TODO: This works for now but needs to be improved/easier to look at
-
       // Update task status
       state.tasksData[taskId] = {
         ...state.tasksData[taskId],
         status: newStatus,
       };
 
-      // Remove the taskId from old status ids and filteredIds
-      const oldTaskIds = state[oldStatus].taskIds;
-      const oldFilteredTaskIds = state[oldStatus].filteredTaskIds;
+      // Remove the taskId from old status ids and filtered ids
+      removeTaskFromList(state[oldStatus].taskIds, taskId);
+      removeTaskFromList(state[oldStatus].filteredTaskIds, taskId);
 
-      const taskIndexInOldIds = oldTaskIds.indexOf(taskId);
-      if (taskIndexInOldIds !== -1) {
-        oldTaskIds.splice(taskIndexInOldIds, 1);
-      }
+      // Resort old status tasks
+      resortTasks({ state, taskStatus: oldStatus });
 
-      const taskIndexInOldFilteredIds = oldFilteredTaskIds.indexOf(taskId);
-      if (taskIndexInOldFilteredIds !== -1) {
-        oldFilteredTaskIds.splice(taskIndexInOldFilteredIds, 1);
-      }
+      // Add the task id to new status ids at the correct newIndex
+      insertTaskAtIndex(state[newStatus].taskIds, taskId, newIndex);
 
-      // Only recalculate filteredTaskIdsByColumn if necessary
-      if (taskIndexInOldIds !== -1 || taskIndexInOldFilteredIds !== -1) {
-        state[oldStatus].filteredTaskIdsByColumn =
-          recalculateFilteredTaskIdsByColumn({
-            state,
-            status: oldStatus,
-          });
-      }
+      // Add the task id to filtered ids, it will be resorted after so position does not matter here
+      state[newStatus].filteredTaskIds = [
+        ...state[newStatus].filteredTaskIds,
+        taskId,
+      ];
 
-      // Add the taskId to new status ids and filteredIds at the correct newIndex
-      const newTaskIds = state[newStatus].taskIds;
-      newTaskIds.splice(newIndex, 0, taskId); // Modify array in place
-
-      const newFilteredTaskIds = state[newStatus].filteredTaskIds;
-      newFilteredTaskIds.push(taskId); // Add taskId to filtered list
-
-      // Sort filteredTaskIds by their position in taskIds array
-      newFilteredTaskIds.sort((a, b) => {
-        return newTaskIds.indexOf(a) - newTaskIds.indexOf(b);
-      });
-
-      // Recalculate filteredTaskIdsByColumn for the new status
-      state[newStatus].filteredTaskIdsByColumn =
-        recalculateFilteredTaskIdsByColumn({
-          state,
-          status: newStatus,
-        });
+      // Resort new status tasks
+      resortTasks({ state, taskStatus: newStatus });
     },
     updateTaskColumnAndPositionLocally: (
       state,
@@ -640,7 +605,6 @@ const tasksSlice = createSlice({
         taskId: string;
         taskStatus: TaskStatus;
         newIndex: number | null;
-        oldColumnId: string;
         newColumnId: string;
       }>,
     ) => {
@@ -652,34 +616,19 @@ const tasksSlice = createSlice({
         columnId: newColumnId,
       };
 
-      const currentIndex = state[taskStatus].taskIds.indexOf(taskId);
+      // If new index is null, we don't need to update tasks' position
+      if (newIndex !== null) {
+        // Adjust the new index if the item was moved to a larger unfiltered index
+        const currentIndex = state[taskStatus].taskIds.indexOf(taskId);
+        const adjustedNewIndex =
+          newIndex > currentIndex ? newIndex - 1 : newIndex;
 
-      if (currentIndex !== -1) {
-        // If new index is null, we don't need to update it's position
-        if (newIndex !== null) {
-          const updatedTaskIds = [
-            ...state[taskStatus].taskIds.slice(0, currentIndex),
-            ...state[taskStatus].taskIds.slice(currentIndex + 1),
-          ];
-
-          // Adjust the newIndex if the item was moved to a larger unfiltered index
-          const adjustedNewIndex =
-            newIndex > currentIndex ? newIndex - 1 : newIndex;
-
-          // Insert the taskId at the adjusted newIndex
-          updatedTaskIds.splice(adjustedNewIndex, 0, taskId);
-          state[taskStatus].taskIds = updatedTaskIds;
-        }
-
-        const { sortedFilteredTaskIds, sortedFilteredIdsByColumn } =
-          resortFilteredTasks({
-            state,
-            status: taskStatus,
-          });
-
-        state[taskStatus].filteredTaskIds = sortedFilteredTaskIds;
-        state[taskStatus].filteredTaskIdsByColumn = sortedFilteredIdsByColumn;
+        // Reposition the task id
+        removeTaskFromList(state[taskStatus].taskIds, taskId);
+        insertTaskAtIndex(state[taskStatus].taskIds, taskId, adjustedNewIndex);
       }
+
+      resortTasks({ state, taskStatus });
     },
     reorderTaskPositionLocally: (
       state,
@@ -691,21 +640,11 @@ const tasksSlice = createSlice({
     ) => {
       const { taskId, newIndex, taskStatus } = action.payload;
 
-      const currentIndex = state[taskStatus].taskIds.indexOf(taskId);
+      // Reposition the task id
+      removeTaskFromList(state[taskStatus].taskIds, taskId);
+      insertTaskAtIndex(state[taskStatus].taskIds, taskId, newIndex);
 
-      if (currentIndex !== -1) {
-        state[taskStatus].taskIds.splice(currentIndex, 1);
-        state[taskStatus].taskIds.splice(newIndex, 0, taskId);
-
-        const { sortedFilteredTaskIds, sortedFilteredIdsByColumn } =
-          resortFilteredTasks({
-            state,
-            status: taskStatus,
-          });
-
-        state[taskStatus].filteredTaskIds = sortedFilteredTaskIds;
-        state[taskStatus].filteredTaskIdsByColumn = sortedFilteredIdsByColumn;
-      }
+      resortTasks({ state, taskStatus });
     },
   },
   extraReducers: (builder) => {
@@ -730,11 +669,7 @@ const tasksSlice = createSlice({
         columnId: action.payload.newColumnId,
       };
 
-      state[action.payload.taskStatus].filteredTaskIdsByColumn =
-        recalculateFilteredTaskIdsByColumn({
-          state,
-          status: action.payload.taskStatus,
-        });
+      resortTasks({ state, taskStatus: action.payload.taskStatus });
     });
     builder.addCase(setTaskAssignee.fulfilled, (state, action) => {
       state.tasksData[action.payload.taskId] = {

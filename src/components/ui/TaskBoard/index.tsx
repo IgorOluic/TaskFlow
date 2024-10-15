@@ -27,8 +27,6 @@ const TaskBoard = () => {
       return;
     }
 
-    console.log(destination, source, draggableId);
-
     if (isSameColumn) {
       const isMovingDown = destination.index > source.index;
 
@@ -47,7 +45,6 @@ const TaskBoard = () => {
           taskId: draggableId,
           droppedAtIndex: destination.index,
           taskStatus: TaskStatus.board,
-          oldColumnId: source.droppableId,
           newColumnId: destination.droppableId,
         }),
       );

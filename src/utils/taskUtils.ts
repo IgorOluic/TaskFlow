@@ -105,67 +105,58 @@ export const calculateNewTaskIndexInColumns = ({
   return globalIndexOfPreviousItem + (isMovingDown ? 0 : 1);
 };
 
-export const recalculateFilteredTaskIdsByColumn = ({
+export const resortTasks = ({
   state,
-  status,
+  taskStatus,
 }: {
   state: ITasksState;
-  status: TaskStatus;
-}): TaskIdsByColumn => {
-  const idsByColumn: TaskIdsByColumn = {};
+  taskStatus: TaskStatus;
+}) => {
   const { tasksData } = state;
-  const { filteredTaskIds } = state[status];
+  const { taskIds, filteredTaskIds } = state[taskStatus];
 
-  filteredTaskIds.forEach((taskId) => {
-    const taskData = tasksData[taskId];
-    const { columnId } = taskData;
+  const resortedFilteredTaskIds: string[] = [];
+  const resortedTaskIdsByColumn: TaskIdsByColumn = {};
+  const resortedFilteredTaskIdsByColumn: TaskIdsByColumn = {};
 
-    if (!idsByColumn[columnId]) {
-      idsByColumn[columnId] = [];
+  taskIds.forEach((taskId) => {
+    const task = tasksData[taskId];
+    if (task) {
+      const { columnId } = task;
+      if (!resortedTaskIdsByColumn[columnId]) {
+        resortedTaskIdsByColumn[columnId] = [];
+      }
+      resortedTaskIdsByColumn[columnId].push(taskId);
+
+      if (filteredTaskIds.includes(taskId)) {
+        resortedFilteredTaskIds.push(taskId);
+
+        if (!resortedFilteredTaskIdsByColumn[columnId]) {
+          resortedFilteredTaskIdsByColumn[columnId] = [];
+        }
+        resortedFilteredTaskIdsByColumn[columnId].push(taskId);
+      }
     }
-
-    idsByColumn[columnId].push(taskId);
   });
 
-  return idsByColumn;
+  state[taskStatus].filteredTaskIds = resortedFilteredTaskIds;
+  state[taskStatus].taskIdsByColumn = resortedTaskIdsByColumn;
+  state[taskStatus].filteredTaskIdsByColumn = resortedFilteredTaskIdsByColumn;
 };
 
-export const resortFilteredTasks = ({
-  state,
-  status,
-}: {
-  state: ITasksState;
-  status: TaskStatus;
-}): {
-  sortedFilteredTaskIds: string[];
-  sortedFilteredIdsByColumn: TaskIdsByColumn;
-} => {
-  const sortedFilteredIdsByColumn: TaskIdsByColumn = {};
-  const { tasksData } = state;
-  const { taskIds, filteredTaskIds } = state[status];
+export const removeTaskFromList = (taskIds: string[], taskId: string) => {
+  const index = taskIds.indexOf(taskId);
+  if (index !== -1) {
+    taskIds.splice(index, 1);
+  }
+};
 
-  // Create a map for taskIds to quickly find the index of a task
-  const taskIndexMap = taskIds.reduce(
-    (map, taskId, index) => {
-      map[taskId] = index;
-      return map;
-    },
-    {} as Record<string, number>,
-  );
-
-  // Sort filteredTaskIds based on their position in taskIds
-  const sortedFilteredTaskIds = [...filteredTaskIds].sort(
-    (a, b) => taskIndexMap[a] - taskIndexMap[b],
-  );
-
-  // Group the sorted filtered tasks by their columnId
-  sortedFilteredTaskIds.forEach((taskId) => {
-    const { columnId } = tasksData[taskId];
-    if (!sortedFilteredIdsByColumn[columnId]) {
-      sortedFilteredIdsByColumn[columnId] = [];
-    }
-    sortedFilteredIdsByColumn[columnId].push(taskId);
-  });
-
-  return { sortedFilteredTaskIds, sortedFilteredIdsByColumn };
+export const insertTaskAtIndex = (
+  taskIds: string[],
+  taskId: string,
+  newIndex: number,
+): void => {
+  if (newIndex >= 0 && newIndex <= taskIds.length) {
+    taskIds.splice(newIndex, 0, taskId); // Insert the taskId at the specified index
+  }
 };
