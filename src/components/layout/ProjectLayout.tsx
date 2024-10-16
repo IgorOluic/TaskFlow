@@ -6,9 +6,7 @@ import { memo, useEffect } from 'react';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { fetchProjectByKey } from '../../redux/projects/projectsSlice';
 import { useTrackProjectMembers } from '../../hooks/useTrackProjectMembers';
-import { useAppSelector } from '../../hooks/useAppSelector';
-import { selectSelectedProjectId } from '../../redux/projects/projectsSelectors';
-import { fetchTasks } from '../../redux/tasks/tasksSlice';
+import { useTrackTasksWithInitialFetch } from '../../hooks/useTrackTasksWithInitialFetch';
 
 const sideBarItems: SidebarItemType[] = [
   {
@@ -45,14 +43,7 @@ const withProjectData = (WrappedComponent: React.ComponentType) => {
     }, [projectKey, dispatch]);
 
     useTrackProjectMembers();
-
-    const selectedProjectId = useAppSelector(selectSelectedProjectId);
-
-    useEffect(() => {
-      if (selectedProjectId) {
-        dispatch(fetchTasks({ projectId: selectedProjectId }));
-      }
-    }, [selectedProjectId]);
+    useTrackTasksWithInitialFetch();
 
     return <WrappedComponent />;
   };

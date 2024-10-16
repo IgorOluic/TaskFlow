@@ -11,7 +11,7 @@ import {
   QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
-import { ITask, ITasksState, TaskStatus } from './tasksTypes';
+import { ITask, ITasksData, ITasksState, TaskStatus } from './tasksTypes';
 import { parseTasksData, parseTasksData2 } from '../../utils/dataUtils';
 import actions from '../../constants/actions';
 import { RootState } from '../store';
@@ -258,12 +258,14 @@ export const setTaskAssignee = createAsyncThunk(
       taskId: string;
       newAssigneeId: string | null;
     },
-    { rejectWithValue, getState },
+    { rejectWithValue, getState, dispatch },
   ) => {
     try {
       const state = getState() as RootState;
       const projectId = state.projects.selectedProjectId;
       const taskRef = doc(db, `projects/${projectId}/tasks/${taskId}`);
+
+      dispatch(setTaskAssigneeLocally({ taskId, assigneeId: newAssigneeId }));
 
       await updateDoc(taskRef, { assignedTo: newAssigneeId });
 
@@ -510,6 +512,7 @@ export const updateTaskStatusAndPosition = createAsyncThunk(
 );
 
 const initialState: ITasksState = {
+  initialLoadInProgress: true,
   tasksData: {},
   backlog: {
     taskIds: [],
@@ -646,6 +649,54 @@ const tasksSlice = createSlice({
 
       resortTasks({ state, taskStatus });
     },
+    setTaskAssigneeLocally: (
+      state,
+      action: PayloadAction<{
+        taskId: string;
+        assigneeId: string | null;
+      }>,
+    ) => {
+      const { taskId, assigneeId } = action.payload;
+      state.tasksData = {
+        ...state.tasksData,
+        [taskId]: { ...state.tasksData[taskId], assignedTo: assigneeId },
+      };
+    },
+    setInitialLoadInProgress: (state, action: PayloadAction<boolean>) => {
+      state.initialLoadInProgress = action.payload;
+    },
+    setInitialTasks: (state, action: PayloadAction<ITasksData>) => {
+      state.tasksData = action.payload;
+    },
+    updateTask: (
+      state,
+      action: PayloadAction<{
+        taskId: string;
+        taskData: ITask;
+      }>,
+    ) => {
+      const { taskId, taskData } = action.payload;
+
+      state.tasksData = { ...state.tasksData, [taskId]: taskData };
+    },
+    updateTaskOrder: (
+      state,
+      action: PayloadAction<{
+        taskStatus: TaskStatus;
+        newTaskOrder: string[];
+        initialLoad: boolean;
+      }>,
+    ) => {
+      const { taskStatus, newTaskOrder, initialLoad } = action.payload;
+
+      state[taskStatus].taskIds = newTaskOrder;
+
+      if (initialLoad) {
+        state[taskStatus].filteredTaskIds = newTaskOrder;
+      }
+
+      resortTasks({ state, taskStatus });
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchTasks.fulfilled, (state, action) => {
@@ -671,12 +722,6 @@ const tasksSlice = createSlice({
 
       resortTasks({ state, taskStatus: action.payload.taskStatus });
     });
-    builder.addCase(setTaskAssignee.fulfilled, (state, action) => {
-      state.tasksData[action.payload.taskId] = {
-        ...state.tasksData[action.payload.taskId],
-        assignedTo: action.payload.newAssigneeId,
-      };
-    });
   },
 });
 
@@ -685,6 +730,11 @@ export const {
   updateTaskColumnAndPositionLocally,
   reorderTaskPositionLocally,
   filterTasks,
+  setTaskAssigneeLocally,
+  setInitialLoadInProgress,
+  setInitialTasks,
+  updateTask,
+  updateTaskOrder,
 } = tasksSlice.actions;
 
 export default tasksSlice.reducer;

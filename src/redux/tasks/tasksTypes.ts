@@ -24,6 +24,7 @@ export interface TaskStatusData {
 }
 
 export interface ITasksState {
+  initialLoadInProgress: boolean;
   tasksData: ITasksData;
   backlog: TaskStatusData;
   board: TaskStatusData;

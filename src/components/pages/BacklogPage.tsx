@@ -1,4 +1,4 @@
-import { Divider, VStack } from '@chakra-ui/react';
+import { CircularProgress, Divider, VStack } from '@chakra-ui/react';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import {
   reorderTaskPosition,
@@ -9,9 +9,12 @@ import Breadcrumbs from '../layout/Breadcrumbs';
 import TaskFilters from '../ui/TaskFilters';
 import { TaskStatus } from '../../redux/tasks/tasksTypes';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import { useAppSelector } from '../../hooks/useAppSelector';
+import { selectInitialLoadInProgress } from '../../redux/tasks/tasksSelectors';
 
 const BacklogPage = () => {
   const dispatch = useAppDispatch();
+  const initialLoadInProgress = useAppSelector(selectInitialLoadInProgress);
 
   const onDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
@@ -56,19 +59,22 @@ const BacklogPage = () => {
     }
   };
 
+  // TODO: Create a proper skeleton while loading
   return (
     <VStack w="full" alignItems="flex-start" p={5}>
       <Breadcrumbs />
-
       <TaskFilters />
+      {initialLoadInProgress ? (
+        <CircularProgress />
+      ) : (
+        <DragDropContext onDragEnd={onDragEnd}>
+          <CollapsibleTaskList title="Board" status={TaskStatus.board} />
 
-      <DragDropContext onDragEnd={onDragEnd}>
-        <CollapsibleTaskList title="Board" status={TaskStatus.board} />
+          <Divider my={10} />
 
-        <Divider my={10} />
-
-        <CollapsibleTaskList title="Backlog" status={TaskStatus.backlog} />
-      </DragDropContext>
+          <CollapsibleTaskList title="Backlog" status={TaskStatus.backlog} />
+        </DragDropContext>
+      )}
     </VStack>
   );
 };

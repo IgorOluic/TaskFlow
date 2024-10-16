@@ -10,6 +10,11 @@ export const selectTaskIds = (status: TaskStatus) =>
     (tasksSlice) => tasksSlice[status].taskIds,
   );
 
+export const selectInitialLoadInProgress = createSelector(
+  [selectTasksSlice],
+  (tasksSlice) => tasksSlice.initialLoadInProgress,
+);
+
 export const selectFilteredTaskIds = (status: TaskStatus) =>
   createSelector(
     [selectTasksSlice],
