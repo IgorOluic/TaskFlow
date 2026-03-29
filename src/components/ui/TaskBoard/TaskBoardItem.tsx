@@ -41,7 +41,7 @@ const withDraggable = <P extends object>(
 ) => {
   return ({ taskId, index, ...props }: DraggableTaskBoardItemProps) => {
     return (
-      <Draggable draggableId={taskId} index={index}>
+      <Draggable draggableId={taskId} index={index} key={taskId}>
         {(provided, snapshot) => (
           <Box
             ref={provided.innerRef}

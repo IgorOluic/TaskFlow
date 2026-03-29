@@ -1,8 +1,11 @@
 import {
+  ITask,
   ITasksState,
+  TaskFilters,
   TaskIdsByColumn,
   TaskStatus,
 } from '../redux/tasks/tasksTypes';
+import { areAllValuesEmpty } from './commonUtils';
 
 // Adding comments here to make it easier to understand
 
@@ -158,5 +161,38 @@ export const insertTaskAtIndex = (
 ): void => {
   if (newIndex >= 0 && newIndex <= taskIds.length) {
     taskIds.splice(newIndex, 0, taskId); // Insert the taskId at the specified index
+  }
+};
+
+export const filterAndResortTasks = (
+  state: ITasksState,
+  statusesToFilter: TaskStatus[],
+) => {
+  statusesToFilter.forEach((status) => {
+    const noFiltersApplied = areAllValuesEmpty(state[status].taskFilters);
+
+    if (noFiltersApplied) {
+      state[status].filteredTaskIds = state[status].taskIds;
+
+      resortTasks({ state, taskStatus: status });
+    } else {
+      state[status].filteredTaskIds = state[status].taskIds.filter((taskId) => {
+        const task = state.tasksData[taskId];
+        return taskFilterCheck(task, state[status].taskFilters);
+      });
+
+      resortTasks({ state, taskStatus: status });
+    }
+  });
+};
+
+export const taskFilterCheck = (task: ITask, appliedFilters: TaskFilters) => {
+  const { search } = appliedFilters;
+
+  if (search) {
+    return (
+      task.summary.toLowerCase().includes(search) ||
+      task.id.toLowerCase().includes(search)
+    );
   }
 };

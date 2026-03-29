@@ -12,6 +12,7 @@ import {
   FormControl,
   FormLabel,
   VStack,
+  useToast,
 } from '@chakra-ui/react';
 import { useAppDispatch } from '../../hooks/useAppDispatch';
 import { useAppSelector } from '../../hooks/useAppSelector';
@@ -22,12 +23,16 @@ import { selectSelectedProjectId } from '../../redux/projects/projectsSelectors'
 import AssigneeSelection from '../ui/AssigneeSelection';
 import useVisibilityControl from '../../hooks/useVisibilityControl';
 import { selectColumnIds } from '../../redux/columns/columnsSelectors';
+import useIsLoading from '../../hooks/useIsLoading';
+import actions from '../../constants/actions';
 
 const NewTaskModal = () => {
   const dispatch = useAppDispatch();
   const { isOpen, onOpen, onClose } = useVisibilityControl();
   const selectedProjectId = useAppSelector(selectSelectedProjectId);
   const columns = useAppSelector(selectColumnIds);
+  const loading = useIsLoading(actions.createTask);
+  const toast = useToast();
 
   const newData = useRef<{
     summary: string;
@@ -41,6 +46,16 @@ const NewTaskModal = () => {
     assignee: null,
   });
 
+  const onSuccessfulCreation = () => {
+    onClose();
+    toast({
+      title: 'Task created.',
+      status: 'success',
+      duration: 4000,
+      isClosable: true,
+    });
+  };
+
   const handleCreateTask = () => {
     if (selectedProjectId) {
       dispatch(
@@ -48,6 +63,7 @@ const NewTaskModal = () => {
           projectId: selectedProjectId,
           ...newData.current,
           columnId: newData.current.columnId || columns[0],
+          onSuccess: onSuccessfulCreation,
         }),
       );
     }
@@ -105,7 +121,13 @@ const NewTaskModal = () => {
               <Button variant="ghost" onClick={onClose}>
                 Cancel
               </Button>
-              <Button colorScheme="blue" ml={3} onClick={handleCreateTask}>
+              <Button
+                colorScheme="blue"
+                ml={3}
+                onClick={handleCreateTask}
+                disabled={loading}
+                isLoading={loading}
+              >
                 Create
               </Button>
             </ModalFooter>

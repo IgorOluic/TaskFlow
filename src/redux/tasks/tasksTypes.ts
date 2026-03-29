@@ -21,8 +21,14 @@ export interface TaskStatusData {
   filteredTaskIds: string[];
   taskIdsByColumn: TaskIdsByColumn;
   filteredTaskIdsByColumn: TaskIdsByColumn;
+  taskFilters: TaskFilters;
 }
 
+export enum TaskFilterTypes {
+  SEARCH = 'search',
+}
+
+export type TaskFilters = Record<TaskFilterTypes, string | null>;
 export interface ITasksState {
   initialLoadInProgress: boolean;
   tasksData: ITasksData;

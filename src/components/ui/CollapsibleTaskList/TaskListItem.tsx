@@ -19,11 +19,16 @@ interface DraggableProps {
 const withDraggable = <P extends object>(
   WrappedComponent: React.ComponentType<P>,
 ) => {
-  return ({ taskId, status, index, ...props }: DraggableProps) => {
+  const ComponentWithDraggable = ({
+    taskId,
+    status,
+    index,
+    ...props
+  }: DraggableProps) => {
     const task = useAppSelector(selectTaskById(taskId));
 
     return (
-      <Draggable draggableId={taskId} index={index}>
+      <Draggable draggableId={taskId} index={index} key={taskId}>
         {(provided, snapshot) => (
           <VStack
             ref={provided.innerRef}
@@ -33,7 +38,6 @@ const withDraggable = <P extends object>(
             bg={snapshot.isDragging ? 'purple.100' : 'white'}
             borderBottomWidth={1}
             borderBottomColor="gray.300"
-            data-extra-info="asd"
           >
             <WrappedComponent task={task} status={status} {...(props as P)} />
           </VStack>
@@ -41,6 +45,12 @@ const withDraggable = <P extends object>(
       </Draggable>
     );
   };
+
+  const wrappedComponentName =
+    WrappedComponent.displayName || WrappedComponent.name || 'Component';
+  ComponentWithDraggable.displayName = `withDraggable(${wrappedComponentName})`;
+
+  return ComponentWithDraggable;
 };
 
 interface TaskListItemProps {

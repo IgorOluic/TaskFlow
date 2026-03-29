@@ -150,8 +150,10 @@ const updateTaskColumnAndPosition = async ({
       throw new Error('Task ID not found in task order');
     }
 
+    const adjustedNewIndex = newIndex > currentIndex ? newIndex - 1 : newIndex;
+
     taskOrder.splice(currentIndex, 1);
-    taskOrder.splice(newIndex, 0, taskId);
+    taskOrder.splice(adjustedNewIndex, 0, taskId);
 
     transaction.update(taskOrderRef, { taskOrder });
     transaction.update(taskRef, {

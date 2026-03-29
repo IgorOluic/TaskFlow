@@ -11,13 +11,20 @@ import {
   QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
-import { ITask, ITasksData, ITasksState, TaskStatus } from './tasksTypes';
+import {
+  ITask,
+  ITasksData,
+  ITasksState,
+  TaskFilterTypes,
+  TaskStatus,
+} from './tasksTypes';
 import { parseTasksData, parseTasksData2 } from '../../utils/dataUtils';
 import actions from '../../constants/actions';
 import { RootState } from '../store';
 import {
   calculateNewTaskIndex,
   calculateNewTaskIndexInColumns,
+  filterAndResortTasks,
   insertTaskAtIndex,
   removeTaskFromList,
   resortTasks,
@@ -34,12 +41,14 @@ export const createTask = createAsyncThunk(
       summary,
       description,
       assignee,
+      onSuccess,
     }: {
       projectId: string;
       columnId?: string | null;
       summary: string;
       description: string;
       assignee: string | null;
+      onSuccess: () => void;
     },
     { rejectWithValue, getState },
   ) => {
@@ -93,6 +102,10 @@ export const createTask = createAsyncThunk(
           transaction.set(taskOrderRef, { taskOrder: [taskId] });
         }
       });
+
+      if (onSuccess) {
+        onSuccess();
+      }
 
       return {
         id: taskId,
@@ -519,12 +532,18 @@ const initialState: ITasksState = {
     filteredTaskIds: [],
     taskIdsByColumn: {},
     filteredTaskIdsByColumn: {},
+    taskFilters: {
+      [TaskFilterTypes.SEARCH]: null,
+    },
   },
   board: {
     taskIds: [],
     filteredTaskIds: [],
     taskIdsByColumn: {},
     filteredTaskIdsByColumn: {},
+    taskFilters: {
+      [TaskFilterTypes.SEARCH]: null,
+    },
   },
 };
 
@@ -532,39 +551,21 @@ const tasksSlice = createSlice({
   name: 'projects',
   initialState,
   reducers: {
-    filterTasks: (
+    applyTaskFilter: (
       state,
       action: PayloadAction<{
-        search: string | null;
+        key: TaskFilterTypes;
+        value: string | null;
         statusesToFilter: TaskStatus[];
       }>,
     ) => {
-      const { search, statusesToFilter } = action.payload;
+      const { key, value, statusesToFilter } = action.payload;
 
-      if (!search) {
-        // TODO: At the moment this resets the filters when the search is cleared,
-        // needs to be updated when user filters are implemented
-        statusesToFilter.forEach((status) => {
-          state[status].filteredTaskIds = state[status].taskIds;
-          resortTasks({ state, taskStatus: status });
-        });
-      } else {
-        const searchQuery = search.toLowerCase();
+      statusesToFilter.forEach((status) => {
+        state[status].taskFilters[key] = value;
+      });
 
-        statusesToFilter.forEach((status) => {
-          state[status].filteredTaskIds = state[status].taskIds.filter(
-            (taskId) => {
-              const task = state.tasksData[taskId];
-              return (
-                task.summary.toLowerCase().includes(searchQuery) ||
-                task.id.toLowerCase().includes(searchQuery)
-              );
-            },
-          );
-
-          resortTasks({ state, taskStatus: status });
-        });
-      }
+      filterAndResortTasks(state, statusesToFilter);
     },
     updateTaskStatusAndPositionLocally: (
       state,
@@ -677,7 +678,15 @@ const tasksSlice = createSlice({
     ) => {
       const { taskId, taskData } = action.payload;
 
+      const shouldResort =
+        state.tasksData[taskId] &&
+        state.tasksData[taskId].columnId !== taskData.columnId;
+
       state.tasksData = { ...state.tasksData, [taskId]: taskData };
+
+      if (shouldResort) {
+        resortTasks({ state, taskStatus: taskData.status });
+      }
     },
     updateTaskOrder: (
       state,
@@ -695,19 +704,21 @@ const tasksSlice = createSlice({
         state[taskStatus].filteredTaskIds = newTaskOrder;
       }
 
-      resortTasks({ state, taskStatus });
+      filterAndResortTasks(state, [taskStatus]);
     },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchTasks.fulfilled, (state, action) => {
       state.tasksData = action.payload.data;
       state.backlog = {
+        ...state.board,
         taskIds: action.payload.backlogSortedTaskIds,
         filteredTaskIds: action.payload.backlogSortedTaskIds,
         taskIdsByColumn: action.payload.backlogIdsByColumn,
         filteredTaskIdsByColumn: action.payload.backlogIdsByColumn,
       };
       state.board = {
+        ...state.board,
         taskIds: action.payload.boardSortedTaskIds,
         filteredTaskIds: action.payload.boardSortedTaskIds,
         taskIdsByColumn: action.payload.boardIdsByColumn,
@@ -729,7 +740,7 @@ export const {
   updateTaskStatusAndPositionLocally,
   updateTaskColumnAndPositionLocally,
   reorderTaskPositionLocally,
-  filterTasks,
+  applyTaskFilter,
   setTaskAssigneeLocally,
   setInitialLoadInProgress,
   setInitialTasks,

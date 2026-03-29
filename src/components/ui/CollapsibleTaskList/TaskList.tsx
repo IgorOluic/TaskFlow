@@ -22,10 +22,10 @@ const TaskList = ({ status }: TaskListProps) => {
           spacing={0}
           cursor="pointer"
         >
-          {taskIds.map((task, index) => (
+          {taskIds.map((taskId, index) => (
             <TaskListItem
-              key={task}
-              taskId={task}
+              key={taskId}
+              taskId={taskId}
               status={status}
               index={index}
             />

@@ -15,3 +15,8 @@ export const dataURLtoBlob = (dataurl: string): Blob => {
 
   return new Blob([u8arr], { type: mime });
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const areAllValuesEmpty = (obj: Record<string, any>): boolean => {
+  return Object.values(obj).every((value) => !value);
+};

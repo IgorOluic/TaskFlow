@@ -5,40 +5,107 @@ import {
   InputRightElement,
   IconButton,
 } from '@chakra-ui/react';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useAppDispatch } from '../../../hooks/useAppDispatch';
-import { filterTasks } from '../../../redux/tasks/tasksSlice';
+import { applyTaskFilter } from '../../../redux/tasks/tasksSlice';
 import SvgIcon from '../SvgIcon';
-import { TaskStatus } from '../../../redux/tasks/tasksTypes';
+import { TaskFilterTypes, TaskStatus } from '../../../redux/tasks/tasksTypes';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const TaskSearchInput = () => {
   const dispatch = useAppDispatch();
-  const [search, setSearch] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    const handler = setTimeout(() => {
+    const params = new URLSearchParams(location.search);
+    const initialSearch = params.get('search') || '';
+
+    if (inputRef.current) {
+      inputRef.current.value = initialSearch;
+    }
+
+    if (initialSearch) {
       dispatch(
-        filterTasks({
-          search,
+        applyTaskFilter({
+          key: TaskFilterTypes.SEARCH,
+          value: initialSearch,
           statusesToFilter: [TaskStatus.backlog, TaskStatus.board],
         }),
       );
-    }, 500);
+    }
 
     return () => {
-      clearTimeout(handler);
+      dispatch(
+        applyTaskFilter({
+          key: TaskFilterTypes.SEARCH,
+          value: '',
+          statusesToFilter: [TaskStatus.backlog, TaskStatus.board],
+        }),
+      );
     };
-  }, [search, dispatch]);
+  }, [dispatch]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
+  const handleInputChange = (value: string) => {
+    const params = new URLSearchParams(location.search);
+
+    if (value) {
+      params.set('search', value);
+    } else {
+      params.delete('search');
+    }
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: params.toString(),
+      },
+      { replace: true },
+    );
+
+    dispatch(
+      applyTaskFilter({
+        key: TaskFilterTypes.SEARCH,
+        value: value,
+        statusesToFilter: [TaskStatus.backlog, TaskStatus.board],
+      }),
+    );
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    debounceTimeoutRef.current = setTimeout(() => {
+      handleInputChange(value);
+    }, 500);
   };
 
   const handleClearSearch = () => {
-    setSearch('');
+    const params = new URLSearchParams(location.search);
+    params.delete('search');
+    navigate(
+      {
+        pathname: location.pathname,
+        search: params.toString(),
+      },
+      { replace: true },
+    );
+
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
+
     dispatch(
-      filterTasks({
-        search: null,
+      applyTaskFilter({
+        key: TaskFilterTypes.SEARCH,
+        value: null,
         statusesToFilter: [TaskStatus.backlog, TaskStatus.board],
       }),
     );
@@ -54,25 +121,18 @@ const TaskSearchInput = () => {
           color="gray.500"
         />
       </InputLeftElement>
-      <Input placeholder="Search" value={search} onChange={handleInputChange} />
-      {search && (
-        <InputRightElement>
-          <IconButton
-            aria-label="Clear search"
-            icon={
-              <SvgIcon
-                name="close"
-                width="12px"
-                height="12px"
-                color="gray.500"
-              />
-            }
-            size="xs"
-            variant="ghost"
-            onClick={handleClearSearch}
-          />
-        </InputRightElement>
-      )}
+      <Input placeholder="Search" ref={inputRef} onChange={handleChange} />
+      <InputRightElement>
+        <IconButton
+          aria-label="Clear search"
+          icon={
+            <SvgIcon name="close" width="12px" height="12px" color="gray.500" />
+          }
+          size="xs"
+          variant="ghost"
+          onClick={handleClearSearch}
+        />
+      </InputRightElement>
     </InputGroup>
   );
 };
